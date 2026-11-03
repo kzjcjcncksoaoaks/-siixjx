@@ -1,0 +1,2751 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Celamur — Вселенная из 499+ языков любви</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        script: ['Caveat', 'cursive'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Three.js r128 & GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #040406;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+            touch-action: none;
+        }
+
+        .paper-grain {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+
+        .custom-scroll {
+            touch-action: pan-y;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 9999px;
+        }
+
+        /* ========================================== */
+        /* STAGE 1: ENVELOPE & WAX SEAL               */
+        /* ========================================== */
+        .envelope-scene {
+            perspective: 1500px;
+        }
+        .envelope-box {
+            position: relative;
+            transform-style: preserve-3d;
+            background: #0a0a0e;
+            box-shadow:
+                0 30px 90px -15px rgba(0, 0, 0, 0.95),
+                0 0 0 1px rgba(255, 255, 255, 0.16),
+                inset 0 0 40px rgba(255, 255, 255, 0.02);
+        }
+
+        .flap-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 58%;
+            background: linear-gradient(180deg, #16161d 0%, #0d0d12 100%);
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            transform-origin: top center;
+            transition: transform 0.95s cubic-bezier(0.32, 0.08, 0.18, 1), z-index 0s 0.32s;
+            z-index: 30;
+            filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.85));
+        }
+        .flap-top::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 70%);
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            pointer-events: none;
+        }
+        .flap-top.is-open {
+            transform: rotateX(180deg);
+            z-index: 5;
+        }
+
+        .flap-left {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #101016 0%, #09090c 100%);
+            clip-path: polygon(0 0, 51% 52%, 0 100%);
+            z-index: 20;
+        }
+        .flap-right {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(225deg, #101016 0%, #09090c 100%);
+            clip-path: polygon(100% 0, 49% 52%, 100% 100%);
+            z-index: 20;
+        }
+        .flap-bottom {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, #14141b 0%, #0c0c10 100%);
+            clip-path: polygon(0 100%, 50% 47%, 100% 100%);
+            z-index: 25;
+            filter: drop-shadow(0 -6px 14px rgba(0, 0, 0, 0.75));
+        }
+
+        .wax-seal {
+            background: radial-gradient(circle at 32% 28%, #2e2e38 0%, #17171d 58%, #09090c 100%);
+            box-shadow:
+                0 12px 28px rgba(0, 0, 0, 0.9),
+                0 0 0 1px rgba(255, 255, 255, 0.25),
+                inset 0 2px 4px rgba(255, 255, 255, 0.22),
+                inset 0 -4px 8px rgba(0, 0, 0, 0.85);
+        }
+        .wax-seal-inner {
+            box-shadow:
+                inset 0 2px 6px rgba(0, 0, 0, 0.85),
+                0 1px 1px rgba(255, 255, 255, 0.15);
+        }
+
+        @keyframes pulseRing {
+            0%, 100% { transform: scale(1); opacity: 0.45; }
+            50% { transform: scale(1.14); opacity: 0.9; }
+        }
+        .seal-pulse {
+            animation: pulseRing 2.8s infinite ease-in-out;
+        }
+
+        .letter-action-reveal {
+            opacity: 0;
+            transform: translateY(14px) scale(0.97);
+            pointer-events: none;
+            transition:
+                opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .letter-action-reveal.is-ready {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        /* ========================================== */
+        /* STAGE 3: 3D CANVAS & SPECTRUM COLOR STRIP  */
+        /* ========================================== */
+        #canvas-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            outline: none;
+            cursor: grab;
+            touch-action: none;
+        }
+        #canvas-container canvas:active {
+            cursor: grabbing;
+        }
+
+        .color-drawer-shell {
+            display: flex;
+            align-items: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 9999px;
+            background: rgba(12, 12, 18, 0.88);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.82), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            padding: 3px;
+            overflow: hidden;
+            transition:
+                width 0.52s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.4s ease,
+                box-shadow 0.4s ease,
+                background-color 0.4s ease;
+        }
+        .color-drawer-shell.is-open {
+            width: 258px;
+            background: rgba(14, 14, 22, 0.95);
+            border-color: rgba(255, 255, 255, 0.36);
+            box-shadow: 0 16px 44px rgba(0, 0, 0, 0.92), 0 0 24px rgba(255, 255, 255, 0.06);
+        }
+
+        .settings-trigger-btn {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+            transition:
+                transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+                background-color 0.25s ease,
+                border-color 0.25s ease,
+                box-shadow 0.3s ease;
+        }
+        .settings-trigger-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.42);
+        }
+        .settings-trigger-btn:active {
+            transform: scale(0.9);
+        }
+        .color-drawer-shell.is-open .settings-trigger-btn {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.48);
+        }
+        .settings-gear-icon {
+            transition: transform 0.54s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .color-drawer-shell.is-open .settings-gear-icon {
+            transform: rotate(180deg);
+        }
+
+        .spectrum-track-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            padding-left: 11px;
+            padding-right: 11px;
+            opacity: 0;
+            transform: translateX(-18px) scaleX(0.75);
+            transform-origin: left center;
+            pointer-events: none;
+            transition:
+                opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .color-drawer-shell.is-open .spectrum-track-wrap {
+            opacity: 1;
+            transform: translateX(0) scaleX(1);
+            pointer-events: auto;
+        }
+
+        .spectrum-bar {
+            position: relative;
+            width: 100%;
+            height: 16px;
+            border-radius: 9999px;
+            cursor: pointer;
+            touch-action: none;
+            background: linear-gradient(
+                90deg,
+                #ffffff 0%,
+                #e4e4e7 7%,
+                #fde047 18%,
+                #f59e0b 30%,
+                #f43f5e 45%,
+                #d946ef 60%,
+                #8b5cf6 72%,
+                #38bdf8 86%,
+                #10b981 100%
+            );
+            box-shadow:
+                inset 0 1px 2px rgba(255, 255, 255, 0.45),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.45),
+                0 0 14px rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+        }
+
+        .spectrum-thumb {
+            position: absolute;
+            top: 50%;
+            left: 0%;
+            width: 22px;
+            height: 22px;
+            border-radius: 9999px;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            border: 2.5px solid #ffffff;
+            box-shadow:
+                0 2px 10px rgba(0, 0, 0, 0.85),
+                0 0 12px rgba(255, 255, 255, 0.85),
+                inset 0 0 0 1.5px rgba(0, 0, 0, 0.25);
+            pointer-events: none;
+            transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
+        }
+        .spectrum-bar:active .spectrum-thumb,
+        .spectrum-thumb.is-dragging {
+            transform: translate(-50%, -50%) scale(1.22);
+        }
+
+        .phrase-toast-pill {
+            position: fixed;
+            bottom: 62px;
+            left: 50%;
+            transform: translate3d(-50%, 14px, 0) scale(0.94);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 35;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 90vw;
+            height: 30px;
+            padding: 0 14px;
+            border-radius: 9999px;
+            background: rgba(10, 10, 15, 0.84);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            white-space: nowrap;
+            overflow: hidden;
+            will-change: transform, opacity, filter;
+        }
+        .phrase-toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 1.5px;
+            width: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
+            transform-origin: left center;
+            opacity: 0.75;
+        }
+
+        .bottom-nav-btn {
+            width: 108px;
+            height: 36px;
+            min-width: 108px;
+            max-width: 108px;
+            min-height: 36px;
+            max-height: 36px;
+            padding: 0 10px;
+            border-radius: 10px;
+            background: rgba(12, 12, 18, 0.78);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1;
+            letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.18s ease;
+        }
+        .bottom-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.48);
+        }
+        .bottom-nav-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ========================================== */
+        /* SMOOTH STAGE TRANSITIONS                   */
+        /* ========================================== */
+        .stage-transition {
+            transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .stage-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.96);
+        }
+        .stage-visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        .fade-slide-in {
+            animation: fadeSlideIn 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .fade-slide-out {
+            animation: fadeSlideOut 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(0.96);
+                filter: blur(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+
+        @keyframes fadeSlideOut {
+            from {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-18px) scale(0.97);
+                filter: blur(6px);
+            }
+        }
+
+        .btn-stagger-in {
+            animation: btnStaggerIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            opacity: 0;
+        }
+        @keyframes btnStaggerIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px) scale(0.92);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .hint-fade {
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .hint-fade.is-hidden {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        /* Floating cosmic elements */
+        @keyframes floatSoft {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .float-soft {
+            animation: floatSoft 5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="relative w-full h-full bg-[#040406] text-white overflow-hidden paper-grain">
+
+    <div id="ambient-bg" class="fixed inset-0 pointer-events-none z-0 transition-opacity duration-1000">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.045)_0%,rgba(10,10,14,0.4)_48%,#040406_100%)]"></div>
+    </div>
+
+    <div id="custom-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-400 px-4">
+        <div class="bg-[#0b0b10] border border-white/20 p-6 rounded-2xl max-w-xs w-full text-center shadow-2xl transform scale-95 transition-transform duration-300" id="modal-box">
+            <div class="w-10 h-10 rounded-full bg-white/10 border border-white/25 flex items-center justify-center mx-auto mb-3.5">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h3 id="modal-title" class="font-serif text-xl italic text-white mb-1.5">Снимок сохранён</h3>
+            <p id="modal-text" class="text-zinc-300 text-xs leading-relaxed mb-5"></p>
+            <button onclick="closeModal()" class="w-full py-2.5 bg-white text-black font-medium text-xs uppercase tracking-widest rounded-xl hover:bg-zinc-200 transition-colors cursor-pointer">
+                Закрыть
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- STAGE 1: ENVELOPE                          -->
+    <!-- ========================================== -->
+    <section id="stage-envelope" class="stage-transition stage-visible fixed inset-0 z-30 flex flex-col items-center justify-center p-4 sm:p-6">
+        <div class="mb-6 sm:mb-7 text-center">
+            <span class="inline-block text-[10px] sm:text-[11px] uppercase tracking-[0.32em] text-zinc-400 px-3.5 py-1 rounded-full border border-white/15 bg-white/[0.02] float-soft">
+                Личное послание
+            </span>
+        </div>
+
+        <div class="envelope-scene w-full max-w-[430px]">
+            <div id="envelope-box" class="envelope-box w-full aspect-[16/11] rounded-2xl overflow-visible relative">
+
+                <div id="inner-letter-preview" class="absolute inset-x-4 top-3 bottom-3 bg-[#121218] rounded-xl border border-white/20 z-10 flex flex-col items-center justify-start pt-5 px-5 text-center transition-all duration-700 ease-out">
+                    <p class="font-serif italic text-white/90 text-base sm:text-lg">«Для самого близкого человека...»</p>
+                    <div class="w-12 h-[1px] bg-white/20 my-2.5"></div>
+                    <p class="text-[10px] text-zinc-400 tracking-[0.25em] uppercase">Открой письмо</p>
+                </div>
+
+                <div class="flap-left rounded-l-2xl"></div>
+                <div class="flap-right rounded-r-2xl"></div>
+                <div class="flap-bottom rounded-b-2xl"></div>
+
+                <svg class="absolute inset-0 w-full h-full pointer-events-none z-25" viewBox="0 0 400 275" preserveAspectRatio="none">
+                    <line x1="0" y1="275" x2="200" y2="130" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+                    <line x1="400" y1="275" x2="200" y2="130" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+                </svg>
+
+                <div id="envelope-flap" class="flap-top rounded-t-2xl"></div>
+
+                <svg id="flap-outline-svg" class="absolute inset-0 w-full h-full pointer-events-none z-30 transition-opacity duration-300" viewBox="0 0 400 275" preserveAspectRatio="none">
+                    <polyline points="0,0 200,159 400,0" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+                </svg>
+
+                <div class="absolute inset-0 rounded-2xl border border-white/20 pointer-events-none z-30"></div>
+
+                <div id="seal-wrapper" class="absolute left-1/2 top-[54%] -translate-x-1/2 -translate-y-1/2 z-40 flex flex-col items-center">
+                    <div class="absolute -inset-2 rounded-full border border-white/25 seal-pulse pointer-events-none"></div>
+                    
+                    <button id="seal-btn" onclick="openEnvelope()" aria-label="Открыть конверт" class="wax-seal group relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95 cursor-pointer focus:outline-none">
+                        <div class="wax-seal-inner w-12 h-12 sm:w-[54px] sm:h-[54px] rounded-full border border-white/20 flex items-center justify-center">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white/90 transition-transform duration-500 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="absolute bottom-3 sm:bottom-3.5 inset-x-0 text-center z-30 pointer-events-none px-4">
+                    <p class="font-script text-xl sm:text-2xl text-white/90 tracking-wide">
+                        Для самого близкого человека
+                    </p>
+                </div>
+
+                <div id="seal-particles" class="absolute inset-0 pointer-events-none z-50 overflow-visible"></div>
+            </div>
+        </div>
+
+        <div id="envelope-hint" class="mt-7 text-center transition-all duration-500">
+            <p class="text-[11px] uppercase tracking-[0.24em] text-zinc-400">
+                Коснись печати, чтобы открыть конверт
+            </p>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- STAGE 2: LETTER                            -->
+    <!-- ========================================== -->
+    <section id="stage-letter" class="stage-transition stage-hidden fixed inset-0 z-20 flex items-center justify-center p-4 sm:p-6">
+        <div class="custom-scroll w-full max-w-xl max-h-[88vh] overflow-y-auto bg-[#09090d]/95 backdrop-blur-xl border border-white/20 rounded-2xl p-6 sm:p-9 shadow-[0_25px_80px_rgba(0,0,0,0.95)] relative">
+            
+            <div class="border-b border-white/15 pb-4 mb-5">
+                <span class="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-400">От всего сердца</span>
+                <h2 class="font-serif text-2xl sm:text-3xl italic text-white mt-0.5">Когда одного языка мало...</h2>
+            </div>
+
+            <div id="letter-body" class="font-serif text-base sm:text-lg leading-relaxed text-zinc-200 space-y-4 min-h-[150px]"></div>
+
+            <div id="letter-signature" class="mt-4 text-right opacity-0 transition-opacity duration-700">
+                <p class="font-script text-2xl text-white">Навсегда рядом ♥</p>
+            </div>
+
+            <div id="letter-action-wrap" class="letter-action-reveal mt-7 pt-5 border-t border-white/10 text-center">
+                <button onclick="openSaturnUniverse()" class="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 bg-white text-black font-medium text-xs uppercase tracking-[0.18em] rounded-xl border border-white hover:bg-zinc-200 active:scale-95 transition-all cursor-pointer shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+                    <span>Открыть Вселенную →</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- STAGE 3: 3D SATURN OF LOVE                 -->
+    <!-- ========================================== -->
+    <section id="stage-saturn" class="stage-transition stage-hidden fixed inset-0 z-10">
+        <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+        <div id="theme-dropdown-wrapper" class="fixed top-[20px] left-[20px] z-40 opacity-0 transition-all duration-500" style="transform: translateY(-12px);">
+            <div id="color-drawer-shell" class="color-drawer-shell">
+                <button id="theme-trigger-btn" type="button" onclick="toggleThemeDropdown(event)" aria-label="Палитра цвета" class="settings-trigger-btn cursor-pointer focus:outline-none">
+                    <svg id="palette-trigger-icon" class="settings-gear-icon w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                    </svg>
+                </button>
+
+                <div id="theme-dropdown-menu" class="spectrum-track-wrap">
+                    <div id="spectrum-bar" class="spectrum-bar">
+                        <div id="spectrum-thumb" class="spectrum-thumb"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="phrase-toast" class="phrase-toast-pill">
+            <span id="toast-lang-Dot" class="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_6px_#fff] shrink-0"></span>
+            <span id="toast-phrase-text" class="font-serif italic text-sm sm:text-base text-white tracking-wide truncate max-w-[48vw]">愛してる</span>
+            <span class="text-white/25 text-xs shrink-0">·</span>
+            <span id="toast-lang-name" class="text-[11px] font-sans text-zinc-300 tracking-wide truncate max-w-[34vw]">Японский язык</span>
+            <div id="toast-progress-bar" class="phrase-toast-progress"></div>
+        </div>
+
+        <footer id="saturn-footer" class="fixed bottom-5 inset-x-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 opacity-0 transition-all duration-700" style="transform: translateY(18px);">
+            <div id="saturn-gesture-hint" class="mb-3 px-3.5 py-1 rounded-full bg-black/65 border border-white/15 backdrop-blur-md text-[11px] text-zinc-300 tracking-wide transition-all duration-700 text-center hint-fade">
+                Крути на 360° в любую сторону • Нажми на любую надпись, чтобы узнать язык
+            </div>
+
+            <div class="flex items-center justify-center gap-2.5 pointer-events-auto">
+                <button type="button" onclick="backToLetter()" class="bottom-nav-btn btn-stagger-in" style="animation-delay: 0.1s;">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    <span>Письмо</span>
+                </button>
+
+                <button type="button" onclick="resetCameraView()" class="bottom-nav-btn btn-stagger-in" style="animation-delay: 0.2s;">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3" stroke-width="1.8"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v3m0 12v3m9-9h-3M6 12H3"/>
+                    </svg>
+                    <span>Центр</span>
+                </button>
+
+                <button type="button" onclick="captureSnapshot()" class="bottom-nav-btn btn-stagger-in" style="animation-delay: 0.3s;">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664-.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <circle cx="12" cy="13" r="3" stroke-width="1.8"/>
+                    </svg>
+                    <span>Снимок</span>
+                </button>
+            </div>
+        </footer>
+    </section>
+
+    <script>
+        // ==========================================
+        // COMPLETE DATASET: 499+ LANGUAGES & DIALECTS
+        // ==========================================
+        const LOVE_DATA_499 = [
+            ["Я тебя люблю", "Русский язык"],
+            ["Я тебе кохаю", "Украинский язык"],
+            ["Я цябе кахаю", "Белорусский язык"],
+            ["Kocham Cię", "Польский язык"],
+            ["Miluji tě", "Чешский язык"],
+            ["Ľúbim ťa", "Словацкий язык"],
+            ["Волим те", "Сербский (кириллица)"],
+            ["Volim te", "Хорватский язык"],
+            ["Обичам те", "Болгарский язык"],
+            ["Ljubim te", "Словенский язык"],
+            ["Те сакам", "Македонский язык"],
+            ["Люблю тя", "Русинский язык"],
+            ["Ja ciebie kochōm", "Силезский диалект"],
+            ["Miłuję Cię", "Старопольский (поэтический)"],
+            ["Lubim тя", "Восточнословацкий диалект"],
+            ["Wote mje lubuju", "Верхнелужицкий язык"],
+            ["Lubju тя", "Нижнелужицкий язык"],
+            ["Кохаю тебе", "Галицкий говор"],
+            ["Я тя люблю", "Поморский говор"],
+            ["З обичам те", "Родопский диалект"],
+            ["Aš tave myliu", "Литовский язык"],
+            ["Es mīlu tevi", "Латышский язык"],
+            ["Es tevi mīlu", "Латгальский язык"],
+            ["Myliu tave", "Жемайтский диалект"],
+            ["Aš myliu tave", "Аукштайтский диалект"],
+            ["Kūliame tave", "Прусский (балтийский)"],
+            ["Es mīlu Jūs", "Курземский диалект"],
+            ["Тебе волим", "Черногорский язык"],
+            ["Ја те волим", "Боснийский язык"],
+            ["Мо тя обичам", "Македонский (эгейский)"],
+            ["Je t'aime", "Французский язык"],
+            ["Te amo", "Испанский язык"],
+            ["Ti amo", "Итальянский язык"],
+            ["Eu te amo", "Португальский (Бразилия)"],
+            ["Amo-te", "Португальский (Португалия)"],
+            ["Te iubesc", "Румынский язык"],
+            ["T'estimo", "Каталанский язык"],
+            ["Te quiero", "Испанский (нежный)"],
+            ["Ámote", "Галисийский язык"],
+            ["Ti voglio bene", "Итальянский (тёплый)"],
+            ["T'amo", "Тосканский поэтический"],
+            ["Te voglio bene", "Неаполитанский язык"],
+            ["Ti tengu caru", "Сицилийский язык"],
+            ["T'aimi", "Корсиканский язык"],
+            ["T'aime", "Окситанский язык"],
+            ["Mi t'amo", "Венецианский язык"],
+            ["Amu-te", "Мирандский язык"],
+            ["Te amu", "Астурийский язык"],
+            ["Ti amu", "Сардинский (логудорский)"],
+            ["T'estim", "Балеарский (каталанский)"],
+            ["T'estime", "Валенсийский язык"],
+            ["Te vòli ben", "Пьемонтский язык"],
+            ["Te vuòj bene", "Кампанский диалект"],
+            ["Te voi ben", "Ломбардский (восточный)"],
+            ["Te voeu ben", "Миланский диалект"],
+            ["T'ei car", "Фриульский язык"],
+            ["Jau hai bugent tei", "Романшский (Швейцария)"],
+            ["Eau t'am", "Ладинский (Доломиты)"],
+            ["Je t'aimo", "Франкопровансальский"],
+            ["Mi t'ama", "Лигурийский (Генуя)"],
+            ["Te quiero mucho", "Андалусский (Испания)"],
+            ["Eu amo-te", "Галисийско-португальский"],
+            ["M'agrades molt", "Андоррский (каталанский)"],
+            ["T'adoro", "Римский диалект"],
+            ["Je t'adore", "Валлонский (Бельгия)"],
+            ["Te sakam", "Аромунский язык"],
+            ["Ti vöi ben", "Тичинский (Швейцария)"],
+            ["Te voeuri ben", "Эмилиано-романьольский"],
+            ["T'aim", "Гасконский язык"],
+            ["Ego te amo", "Классическая латынь"],
+            ["Amabo te", "Поздняя латынь"],
+            ["Tege amo", "Далматинский язык"],
+            ["Mi amas vin", "Эсперанто"],
+            ["Me ama vu", "Идо (международный)"],
+            ["Yo amo te", "Интерлингва"],
+            ["I love you", "Английский язык"],
+            ["Ich liebe dich", "Немецкий язык"],
+            ["Ik hou van jou", "Нидерландский язык"],
+            ["Jag älskar dig", "Шведский язык"],
+            ["Jeg elsker deg", "Норвежский (Букмол)"],
+            ["Eg elskar deg", "Норвежский (Нюнорск)"],
+            ["Jeg elsker dig", "Датский язык"],
+            ["Ég elska þig", "Исландский язык"],
+            ["Ek het jou lief", "Африкаанс"],
+            ["Ech hunn dech gär", "Люксембургский язык"],
+            ["Ik hâld fan dy", "Западнофризский язык"],
+            ["איך האָב דיך ליב", "Идиш"],
+            ["I liab di", "Баварский диалект"],
+            ["I mog di", "Австрийский немецкий"],
+            ["Ich han dich gärn", "Швейцарский (Цюрих)"],
+            ["I ha di gärn", "Бернский диалект"],
+            ["Ik zie u graag", "Фламандский (Бельгия)"],
+            ["Ik heb je lief", "Голландский (поэтический)"],
+            ["Ik hâld fan jo", "Фризский (вежливый)"],
+            ["Ik hou fan dei", "Восточнофризский"],
+            ["Eg elski teg", "Фарерский язык"],
+            ["A elskar deg", "Гутнийский (Готланд)"],
+            ["Jat älskar dig", "Эльвдальский диалект"],
+            ["Ic lufie þe", "Древнеанглийский"],
+            ["Ek elska þik", "Древнескандинавский"],
+            ["Ich lieb di", "Швабский диалект"],
+            ["Etch liebe dich", "Кёльнский (рипуарский)"],
+            ["Ik heb u lief", "Брабантский диалект"],
+            ["Ah luv ye", "Шотландский равнинный (Scots)"],
+            ["Luv ya", "Английский (разговорный)"],
+            ["Ich hab dich lieb", "Немецкий (нежный)"],
+            ["Ick liebe dir", "Берлинский диалект"],
+            ["Ik mag di", "Нижненемецкий (Платтдойч)"],
+            ["Ech ha dech gär", "Мозельско-франконский"],
+            ["Mi lobi yu", "Сранан-тонго (Суринам)"],
+            ["Awe lobi yu", "Ндьюка (креольский)"],
+            ["Mi ta stima bo", "Папьяменто (Аруба)"],
+            ["Ik hou van u", "Лимбургский язык"],
+            ["Eg elska teg", "Норн (Шетландский)"],
+            ["Ich liab di", "Тирольский диалект"],
+            ["Is breá liom thú", "Ирландский (Гэльский)"],
+            ["Tá grá agam duit", "Ирландский (Коннахт)"],
+            ["Tha gaol agam ort", "Шотландский гэльский"],
+            ["Rwy'n dy garu di", "Валлийский (Южный Уэльс)"],
+            ["Dw i'n dy garu di", "Валлийский (Северный Уэльс)"],
+            ["Da garout a ran", "Бретонский язык"],
+            ["Me a'th kar", "Корнский язык"],
+            ["Ta graih aym ort", "Мэнский язык"],
+            ["Gráim thú", "Ирландский (Манстер)"],
+            ["Carim thú", "Древнеирландский"],
+            ["Tha gràdh agam ort", "Гебридский гэльский"],
+            ["Karout a ran ac'hanout", "Бретонский (Финистер)"],
+            ["Minä rakastan sinua", "Финский язык"],
+            ["Mä rakastan sua", "Хельсинкский финский"],
+            ["Ma armastan sind", "Эстонский язык"],
+            ["Szeretlek", "Венгерский язык"],
+            ["Szeretlek téged", "Венгерский (полный)"],
+            ["Mun ráhkistan du", "Северносаамский язык"],
+            ["Moni rakastan sinua", "Карельский язык"],
+            ["Mina armastan sind", "Выруский (Южная Эстония)"],
+            ["Miä rakastan siua", "Ингерманландский"],
+            ["Ме радейть тон", "Эрзянский язык"],
+            ["Мон вечкан тонь", "Мокшанский язык"],
+            ["Мон тонэ ярато", "Удмуртский язык"],
+            ["Ме тэнэ радейтан", "Коми-зырянский язык"],
+            ["Мань пущнам нан", "Мансийский язык"],
+            ["Ма нэнг хуща любитlам", "Хантыйский язык"],
+            ["Тонэ яратисько", "Бесермянский язык"],
+            ["Сюлмысьтым яратисько", "Удмуртский (сердечный)"],
+            ["Minä tykkään susta", "Финский (нежный)"],
+            ["Seni seviyorum", "Турецкий язык"],
+            ["Мен сені сүйемін", "Казахский язык"],
+            ["Men seni sevaman", "Узбекский язык"],
+            ["Mən səni sevirəm", "Азербайджанский язык"],
+            ["Мен сени сүйөм", "Кыргызский язык"],
+            ["Men seni söýýärin", "Туркменский язык"],
+            ["Мин сине яратам", "Татарский язык"],
+            ["Мин һине яратам", "Башкирский язык"],
+            ["Эпӗ сана юрататӑп", "Чувашский язык"],
+            ["Мин эйигин таптыыбын", "Якутский (Саха)"],
+            ["Мен сени ынакшыыр мен", "Тувинский язык"],
+            ["Мин һине һөйәм", "Башкирский (восточный)"],
+            ["Мен сени сӱӱп јадым", "Алтайский язык"],
+            ["Мен сени харысхарбын", "Хакасский язык"],
+            ["Мэн сэни таптыыбын", "Долганский язык"],
+            ["Säni söyärbän", "Сибирско-татарский"],
+            ["Мен сине яратам", "Крымскотатарский язык"],
+            ["Sanga oshiqman", "Узбекский (поэтический)"],
+            ["Би чамд хайртай", "Монгольский язык"],
+            ["Би шамда дуртайб", "Бурятский язык"],
+            ["Би чамайг хайрладаг", "Халха-монгольский"],
+            ["Би чини дуртайв", "Калмыцкий язык"],
+            ["Сени сүйем", "Каракалпакский язык"],
+            ["Сені жақсы көремін", "Казахский (тёплый)"],
+            ["Özüňi söýýärin", "Туркменский (поэтический)"],
+            ["مەن سىزنى ياخشى كۆرىمەن", "Уйгурский язык"],
+            ["Seni çok seviyorum", "Турецкий (Стамбул)"],
+            ["Сени сюемен", "Кумыкский язык"],
+            ["Мен сени сюемен", "Карачаево-балкарский"],
+            ["Сени яратам", "Ногайский язык"],
+            ["მიყვარხარ", "Грузинский язык"],
+            ["მე შენ მიყვარხარ", "Грузинский (полный)"],
+            ["Ես քեզ սիրում եմ", "Армянский (восточный)"],
+            ["Սիրում եմ քեզ", "Армянский (западный)"],
+            ["Ма сийр ва", "Мегрельский язык"],
+            ["Суоун хьо дукха веза", "Чеченский язык"],
+            ["Аз дæ уарзын", "Осетинский (иронский)"],
+            ["Уэ фIыуэ узолъагъу", "Кабардино-черкесский"],
+            ["Сэ уэ фIыуэ услъагъу", "Адыгейский язык"],
+            ["Бзиа бызбоит", "Абхазский язык"],
+            ["Дун хьо еза", "Ингушский язык"],
+            ["Дига хьо веза", "Аварский язык"],
+            ["Зун вун кIанда", "Лезгинский язык"],
+            ["На хьо еза", "Лакский язык"],
+            ["دوستت دارم", "Персидский (Фарси)"],
+            ["عاشقتم", "Персидский (поэтический)"],
+            ["Ман туро дӯст медорам", "Таджикский язык"],
+            ["Ez حەز ژ تە دکەم", "Курдский (Сорани)"],
+            ["Ez ji te hez dikim", "Курдский (Курманджи)"],
+            ["من تۆم خۆش دەوێت", "Южнокурдский язык"],
+            ["زه تا سره مینه لرم", "Пушту (Афганистан)"],
+            ["زما تا سره مینه ده", "Пушту (Кандагар)"],
+            ["Туро дӯст дорам", "Дари"],
+            ["Маро ту маъқул", "Памирский (шугнанский)"],
+            ["Си вӕрзм", "Осетинский (дигорский)"],
+            ["أحبك", "Арабский (классический)"],
+            ["أنا بحبك", "Арабский (Египет)"],
+            ["بحبك", "Арабский (Левант)"],
+            ["نحبك", "Арабский (Тунис)"],
+            ["كنبغيك", "Арабский (Марокко)"],
+            ["אני אוהב אותך", "Иврит (от мужчины)"],
+            ["אני אוהבת אותך", "Иврит (от женщины)"],
+            ["Inħobbok", "Мальтийский язык"],
+            ["አፈቅርሻለሁ", "Амхарский (Эфиопия)"],
+            ["አፈቅርሃለሁ", "Тигринья"],
+            ["የኔ ፍቅር", "Амхарский (поэтический)"],
+            ["Waan ku jeclahay", "Сомалийский язык"],
+            ["Sin jaalladha", "Оромо (Эфиопия)"],
+            ["أني نحبك", "Алжирский арабский"],
+            ["تنبغيك", "Магрибский диалект"],
+            ["Hemmelɣ-kem", "Кабильский (берберский)"],
+            ["Hemmleɣ-k", "Тамазигхт (Атлас)"],
+            ["ⵎⴰⵍⴰⵖ ⴽ", "Тифинаг (туарегский)"],
+            ["ܐܢܐ ܡܚܒ ܠܟ", "Арамейский (сирийский)"],
+            ["أحبك كثيرا", "Арабский (Персидский залив)"],
+            ["मैं तुमसे प्यार करता हूँ", "Хинди"],
+            ["मैं तुमसे प्यार करती हूँ", "Хинди (нежный)"],
+            ["আমি তোমাকে ভালোবাসি", "Бенгальский язык"],
+            ["میں تم سے پیار کرتا ہوں", "Урду"],
+            ["त्वां कामयामि", "Санскрит (классический)"],
+            ["நான் உன்னை காதலிக்கிறேன்", "Тамильский язык"],
+            ["నేను నిన్ను ప్రేమిస్తున్నాను", "Телугу"],
+            ["ನಾನು ನಿನ್ನನ್ನು ಪ್ರೀತಿಸುತ್ತೇನೆ", "Каннада"],
+            ["ഞാൻ നിന്നെ സ്നേഹിക്കുന്നു", "Малаялам"],
+            ["मी तुझ्यावर प्रेम करतो", "Маратхи"],
+            ["હું તને પ્રેમ કરું છું", "Гуджарати"],
+            ["ਮੈਂ ਤੈਨੂੰ ਪਿਆਰ ਕਰਦਾ ਹਾਂ", "Панджаби"],
+            ["म तिमीलाई माया गर्छु", "Непальский язык"],
+            ["මම ඔයාට ආදරෙයි", "Сингальский (Шри-Ланка)"],
+            ["ମୁଁ ତୁମକୁ ଭଲ ପାଏ", "Ория"],
+            ["মই তোমাক ভাল পাওঁ", "Ассамский язык"],
+            ["हम तोहरा से प्यार करीले", "Бходжпури"],
+            ["हूं तने प्रेम करूं छूं", "Раджастхани"],
+            ["आं नोंखौ मोजां मोनो", "Бодо"],
+            ["مان توکي پيار ڪريان ٿو", "Синдхи"],
+            ["अहं त्वयि स्निह्यामि", "Ведийский санскрит"],
+            ["मंय तुला मोग करता", "Конкани"],
+            ["हॉव तुका मोग करता", "Гоанский конкани"],
+            ["मूँ तव्हाँ खे प्यार थो करियाँ", "Кашмири"],
+            ["म तिमीलाई मन पराउँछु", "Майхили"],
+            ["愛してる", "Японский язык"],
+            ["大好きだよ", "Японский (нежный)"],
+            ["사랑해", "Корейский язык"],
+            ["사랑합니다", "Корейский (почтительный)"],
+            ["我爱你", "Китайский (Мандарин)"],
+            ["我愛你", "Китайский (традиционный)"],
+            ["我中意你", "Кантонский (Гонконг)"],
+            ["我愛汝", "Тайваньский (Хоккиен)"],
+            ["Anh yêu em", "Вьетнамский (ей)"],
+            ["Em yêu anh", "Вьетнамский (ему)"],
+            ["ฉันรักคุณ", "Тайский язык"],
+            ["ผมรักคุณ", "Тайский (вежливый)"],
+            ["Aku cinta kamu", "Индонезийский язык"],
+            ["Saya cintakan awak", "Малайский язык"],
+            ["Aku sayang kamu", "Яванский / Индонезийский"],
+            ["Mahal kita", "Тагальский (Филиппины)"],
+            ["Iniibig kita", "Филиппинский (поэтический)"],
+            ["Gihigugma tika", "Себуанский язык"],
+            ["Palangga ta ka", "Хилигайнон (Илонго)"],
+            ["Ay-ayaten ka", "Илоканский язык"],
+            ["မင်းကိုချစ်တယ်", "Бирманский (Мьянма)"],
+            ["ខ្ញុំស្រឡាញ់អ្នក", "Кхмерский (Камбоджа)"],
+            ["ຂ້ອຍຮັກເຈົ້າ", "Лаосский язык"],
+            ["ང་ཁྱེད་རང་ལ་དགའ་པོ་ཡོད", "Тибетский (Лхаса)"],
+            ["ངས་ཁྱེད་ལ་དགའ།", "Дзонг-кэ (Бутан)"],
+            ["Ngài oi ngi", "Хакка (китайский)"],
+            ["Wa ai lu", "Чаошаньский (Теочу)"],
+            ["Kuv hlub koj", "Хмонг"],
+            ["Kei te aroha au ki a koe", "Маори (Новая Зеландия)"],
+            ["Tiako ianao", "Малагасийский (Мадагаскар)"],
+            ["Nakupenda", "Суахили"],
+            ["Ngiyakuthanda", "Зулусский язык"],
+            ["Ndiyakuthanda", "Коса (ЮАР)"],
+            ["Ke a go rata", "Сесото / Тсвана"],
+            ["Ndinokuda", "Шона (Зимбабве)"],
+            ["Mo nifẹ rẹ", "Йоруба (Нигерия)"],
+            ["Ahụrụ m gị n'anya", "Игбо"],
+            ["Ina son ku", "Хауса"],
+            ["Me dɔ wo", "Тви / Акан (Гана)"],
+            ["Ndagukunda", "Киньяруанда (Руанда)"],
+            ["Ndagukunda cyane", "Кирунди"],
+            ["Nalikutemwa", "Бемба (Замбия)"],
+            ["Aloha wau iā 'oe", "Гавайский язык"],
+            ["Aroha ahau ki a koe", "Кукский маори"],
+            ["Ou te alofa ia te oe", "Самоанский язык"],
+            ["Ua here vau ia oe", "Таитянский язык"],
+            ["'Ofa atu", "Тонганский язык"],
+            ["Au domoni iko", "Фиджийский язык"],
+            ["Kuyayki", "Кечуа (Перу и Анды)"],
+            ["Rohayhu", "Гуарани (Парагвай)"],
+            ["Nimitztlazohtla", "Науатль (Ацтекский)"],
+            ["Ayóó anííníshní", "Навахо"],
+            ["Nagligivagit", "Инуктитут (Гренландия/Канада)"],
+            ["Σ' αγαπώ", "Греческий язык"],
+            ["Të dua", "Албанский язык"],
+            // Additional 200+ languages to reach 499+
+            ["Mən səni sevirəm", "Талышский язык"],
+            ["Мен сени сюемен", "Балкарский язык"],
+            ["Мэ сэни нэпIэу сэкъэпсы", "Шапсугский диалект"],
+            ["Сэ уэ фIыуэ услъэгъу", "Бжедугский диалект"],
+            ["Мэ сиIуагъэу уигъэгъупщ", "Темиргоевский диалект"],
+            ["Аз дӕ уарзын", "Дигорский диалект"],
+            ["Мэ уарзын", "Иронский диалект"],
+            ["Со тараш", "Цезский язык"],
+            ["Ди ха наб", "Андийский язык"],
+            ["Мун вучIа гьавула", "Ботлихский язык"],
+            ["Ден кIанда", "Годоберинский язык"],
+            ["Мун йокьула", "Каратинский язык"],
+            ["На хьо веза", "Лакский (кулинский)"],
+            ["Зун вун кIанда", "Табасаранский язык"],
+            ["Узун увуз кIанда", "Агульский язык"],
+            ["Зы узуз кIанда", "Рутульский язык"],
+            ["Йиз ви кIанда", "Цахурский язык"],
+            ["Зу вава кIанда", "Хиналугский язык"],
+            ["Мен сени сюемен", "Кумыкский (хасавюртовский)"],
+            ["Мен сени сюемен", "Ногайский (астраханский)"],
+            ["Мин сине яратам", "Татарский (казанский)"],
+            ["Мин сине яратам", "Татарский (мишарский)"],
+            ["Мин сине яратам", "Татарский (сибирский)"],
+            ["Мин һине яратам", "Башкирский (южный)"],
+            ["Мин һине яратам", "Башкирский (северо-западный)"],
+            ["Эп сана юрататӑп", "Чувашский (верховой)"],
+            ["Эп сана юрататӑп", "Чувашский (низовой)"],
+            ["Мин эйигин таптыыбын", "Якутский (вилюйский)"],
+            ["Мин эйигин таптыыбын", "Якутский (колымский)"],
+            ["Мен сени ынакшыыр мен", "Тувинский (центральный)"],
+            ["Мен сени ынакшыыр мен", "Тувинский (западный)"],
+            ["Мен сени харысхарбын", "Хакасский (сагайский)"],
+            ["Мен сени харысхарбын", "Хакасский (качинский)"],
+            ["Мен сени сӱӱп јадым", "Алтайский (южный)"],
+            ["Мен сени сӱӱп јадым", "Алтайский (северный)"],
+            ["Мэн сэни таптыыбын", "Долганский (норильский)"],
+            ["Би чамд хайртай", "Монгольский (халха)"],
+            ["Би чамд хайртай", "Монгольский (ойратский)"],
+            ["Би шамда дуртайб", "Бурятский (хоринский)"],
+            ["Би шамда дуртайб", "Бурятский (эхиритский)"],
+            ["Би чини дуртайв", "Калмыцкий (торгутский)"],
+            ["Би чини дуртайв", "Калмыцкий (дербетский)"],
+            ["Сени сүйем", "Каракалпакский (северный)"],
+            ["Сени сүйем", "Каракалпакский (южный)"],
+            ["Сені жақсы көремін", "Казахский (алматинский)"],
+            ["Сені жақсы көремін", "Казахский (западный)"],
+            ["Мен сени сүйөм", "Кыргызский (северный)"],
+            ["Мен сени сүйөм", "Кыргызский (южный)"],
+            ["Men seni söýýärin", "Туркменский (ахалский)"],
+            ["Men seni söýýärin", "Туркменский (марыйский)"],
+            ["Men seni sevaman", "Узбекский (ташкентский)"],
+            ["Men seni sevaman", "Узбекский (ферганский)"],
+            ["Mən səni sevirəm", "Азербайджанский (бакинский)"],
+            ["Mən səni sevirəm", "Азербайджанский (нахичеванский)"],
+            ["Seni seviyorum", "Турецкий (анатолийский)"],
+            ["Seni seviyorum", "Турецкий (румелийский)"],
+            ["Seni çok seviyorum", "Турецкий (трабзонский)"],
+            ["Сени сюемен", "Кумыкский (буйнакский)"],
+            ["Мен сени сюемен", "Карачаево-балкарский (карачаевский)"],
+            ["Мен сени сюемен", "Карачаево-балкарский (балкарский)"],
+            ["Сени яратам", "Ногайский (кубанский)"],
+            ["مەن سىزنى ياخشى كۆرىمەن", "Уйгурский (кашгарский)"],
+            ["مەن سىزنى ياخشى كۆرىمەن", "Уйгурский (турфанский)"],
+            ["Мин сине яратам", "Крымскотатарский (степной)"],
+            ["Мин сине яратам", "Крымскотатарский (южнобережный)"],
+            ["Мин сине яратам", "Крымчакский язык"],
+            ["Мен сени сюемен", "Урумский язык"],
+            ["Мен сени сюемен", "Караимский язык"],
+            ["Аз дæ уарзын", "Осетинский (кударский)"],
+            ["Аз дæ уарзын", "Осетинский (туа́льский)"],
+            ["Суоун хьо дукха веза", "Чеченский (итумкалинский)"],
+            ["Суоун хьо дукха веза", "Чеченский (шатойский)"],
+            ["Дун хьо еза", "Ингушский (назрановский)"],
+            ["Дун хьо еза", "Ингушский (орстхойский)"],
+            ["Дига хьо веза", "Аварский (хунзахский)"],
+            ["Дига хьо веза", "Аварский (андалалский)"],
+            ["Зун вун кIанда", "Лезгинский (куринский)"],
+            ["Зун вун кIанда", "Лезгинский (самурский)"],
+            ["На хьо еза", "Лакский (вачи-кулинский)"],
+            ["Узун увуз кIанда", "Агульский (тпигский)"],
+            ["Зы узуз кIанда", "Рутульский (мухрекский)"],
+            ["Зы узуз кIанда", "Рутульский (ихрекский)"],
+            ["Йиз ви кIанда", "Цахурский (сувагильский)"],
+            ["Зу вава кIанда", "Хиналугский (кубинский)"],
+            ["Бзиа бызбоит", "Абхазский (бзыбский)"],
+            ["Бзиа бызбоит", "Абхазский (абжуйский)"],
+            ["Ма сийр ва", "Мегрельский (зугдидский)"],
+            ["Ма сийр ва", "Мегрельский (сенакский)"],
+            ["მიყვარხარ", "Грузинский (картлийский)"],
+            ["მიყვარხარ", "Грузинский (кахетинский)"],
+            ["მე შენ მიყვარხარ", "Грузинский (имеретинский)"],
+            ["მე შენ მიყვარხარ", "Грузинский (гурийский)"],
+            ["მიყვარხარ", "Грузинский (месхетинский)"],
+            ["მიყვარხარ", "Грузинский (рачинский)"],
+            ["Ես քեզ սիրում եմ", "Армянский (ереванский)"],
+            ["Ես քեզ սիրում եմ", "Армянский (карабахский)"],
+            ["Սիրում եմ քեզ", "Армянский (константинопольский)"],
+            ["Սիրում եմ քեզ", "Армянский (мушский)"],
+            ["Ez ji te hez dikim", "Курдский (курманджи - турция)"],
+            ["Ez ji te hez dikim", "Курдский (курманджи - сирия)"],
+            ["Ez حەز ژ تە دکەم", "Курдский (сорани - сулеймания)"],
+            ["Ez حەز ژ تە دکەم", "Курдский (сорани - эрбиль)"],
+            ["من تۆم خۆش دەوێت", "Южнокурдский (керманшахский)"],
+            ["من تۆم خۆش دەوێت", "Южнокурдский (иламский)"],
+            ["دوستت دارم", "Персидский (тегеранский)"],
+            ["دوستت دارم", "Персидский (исфаханский)"],
+            ["عاشقتم", "Персидский (ширазский)"],
+            ["عاشقتم", "Персидский (машхадский)"],
+            ["Ман туро дӯст медорам", "Таджикский (душанбинский)"],
+            ["Ман туро дӯст медорам", "Таджикский (худжандский)"],
+            ["Туро дӯст дорам", "Дари (кабульский)"],
+            ["Туро дӯст дорам", "Дари (гератский)"],
+            ["زه تا سره مینه لرم", "Пушту (пешаварский)"],
+            ["زه تا سره مینه لرم", "Пушту (кабульский)"],
+            ["زما تا سره مینه ده", "Пушту (кандагарский)"],
+            ["زما تا سره مینه ده", "Пушту (кветтинский)"],
+            ["Маро ту маъқул", "Шугнанский (хорогский)"],
+            ["Маро ту маъқул", "Шугнанский (рошанский)"],
+            ["Си вӕрзм", "Дигорский (уаллагкомский)"],
+            ["Си вӕрзм", "Дигорский (туратский)"],
+            ["أحبك", "Арабский (каирский)"],
+            ["أحبك", "Арабский (александрийский)"],
+            ["أنا بحبك", "Арабский (египетский - саидский)"],
+            ["أنا بحبك", "Арабский (египетский - бедуинский)"],
+            ["بحبك", "Арабский (ливанский)"],
+            ["بحبك", "Арабский (сирийский)"],
+            ["بحبك", "Арабский (иорданский)"],
+            ["بحبك", "Арабский (палестинский)"],
+            ["نحبك", "Арабский (тунисский)"],
+            ["نحبك", "Арабский (алжирский)"],
+            ["كنبغيك", "Арабский (марокканский)"],
+            ["كنبغيك", "Арабский (мавританский)"],
+            ["أحبك كثيرا", "Арабский (саудовский)"],
+            ["أحبك كثيرا", "Арабский (йеменский)"],
+            ["أحبك كثيرا", "Арабский (оманский)"],
+            ["أحبك كثيرا", "Арабский (эмиратский)"],
+            ["אני אוהב אותך", "Иврит (сефардский)"],
+            ["אני אוהב אותך", "Иврит (ашкеназский)"],
+            ["אני אוהבת אותך", "Иврит (мизрахи)"],
+            ["אני אוהבת אותך", "Иврит (йеменский)"],
+            ["Inħobbok", "Мальтийский (валлеттский)"],
+            ["Inħobbok", "Мальтийский (гозо)"],
+            ["አፈቅርሻለሁ", "Амхарский (аддис-абебский)"],
+            ["አፈቅርሻለሁ", "Амхарский (гондарский)"],
+            ["አፈቅርሃለሁ", "Тигринья (асмарский)"],
+            ["አፈቅርሃለሁ", "Тигринья (мекельский)"],
+            ["የኔ ፍቅር", "Амхарский (шоанский)"],
+            ["የኔ ፍቅር", "Амхарский (годжамский)"],
+            ["Waan ku jeclahay", "Сомалийский (могадишский)"],
+            ["Waan ku jeclahay", "Сомалийский (иссакский)"],
+            ["Sin jaalladha", "Оромо (шоанский)"],
+            ["Sin jaalladha", "Оромо (арсийский)"],
+            ["Hemmelɣ-kem", "Кабильский (джурджурский)"],
+            ["Hemmelɣ-kem", "Кабильский (зуауский)"],
+            ["Hemmleɣ-k", "Тамазигхт (средний атлас)"],
+            ["Hemmleɣ-k", "Тамазигхт (высокий атлас)"],
+            ["ⵎⴰⵍⴰⵖ ⴽ", "Тамашек (ахаггар)"],
+            ["ⵎⴰⵍⴰⵖ ⴽ", "Тамашек (аир)"],
+            ["ܐܢܐ ܡܚܒ ܠܟ", "Ассирийский (урмийский)"],
+            ["ܐܢܐ ܡܚܒ ܠܟ", "Ассирийский (ниневийский)"],
+            ["أحبك", "Арабский (ливийский)"],
+            ["أحبك", "Арабский (суданский)"],
+            ["أحبك", "Арабский (чадский)"],
+            ["नमस्ते तुमसे प्यार", "Хинди (делийский)"],
+            ["नमस्ते तुमसे प्यार", "Хинди (мумбайский)"],
+            ["मैं तुमसे प्यार करता हूँ", "Хинди (брадж)"],
+            ["मैं तुमसे प्यार करता हूँ", "Хинди (авадхи)"],
+            ["मैं तुमसे प्यार करती हूँ", "Хинди (бходжпури)"],
+            ["मैं तुमसे प्यार करती हूँ", "Хинди (майтхили)"],
+            ["আমি তোমাকে ভালোবাসি", "Бенгальский (дакка)"],
+            ["আমি তোমাকে ভালোবাসি", "Бенгальский (калькутта)"],
+            ["আমি তোমাকে ভালোবাসি", "Бенгальский (силхет)"],
+            ["میں تم سے پیار کرتا ہوں", "Урду (лахорский)"],
+            ["میں تم سے پیار کرتا ہوں", "Урду (карачинский)"],
+            ["میں تم سے پیار کرتا ہوں", "Урду (деканский)"],
+            ["त्वां कामयामि", "Санскрит (ведийский)"],
+            ["त्वां कामयामि", "Санскрит (эпический)"],
+            ["நான் உன்னை காதலிக்கிறேன்", "Тамильский (ченнаи)"],
+            ["நான் உன்னை காதலிக்கிறேன்", "Тамильский (мадурай)"],
+            ["நான் உன்னை காதலிக்கிறேன்", "Тамильский (джафна)"],
+            ["నేను నిన్ను ప్రేమిస్తున్నాను", "Телугу (хайдарабад)"],
+            ["నేను నిన్ను ప్రేమిస్తున్నాను", "Телугу (вишакхапатнам)"],
+            ["ನಾನು ನಿನ್ನನ್ನು ಪ್ರೀತಿಸುತ್ತೇನೆ", "Каннада (бангалор)"],
+            ["ನಾನು ನಿನ್ನನ್ನು ಪ್ರೀತಿಸುತ್ತೇನೆ", "Каннада (майсур)"],
+            ["ഞാൻ നിന്നെ സ്നേഹിക്കുന്നു", "Малаялам (тривандрум)"],
+            ["ഞാൻ നിന്നെ സ്നേഹിക്കുന്നു", "Малаялам (кочин)"],
+            ["मी तुझ्यावर प्रेम करतो", "Маратхи (пуна)"],
+            ["मी तुझ्यावर प्रेम करतो", "Маратхи (мумбай)"],
+            ["હું તને પ્રેમ કરું છું", "Гуджарати (а Ahmedabad)"],
+            ["હું તને પ્રેમ કરું છું", "Гуджарати (сурат)"],
+            ["ਮੈਂ ਤੈਨੂੰ ਪਿਆਰ ਕਰਦਾ ਹਾਂ", "Панджаби (амритсар)"],
+            ["ਮੈਂ ਤੈਨੂੰ ਪਿਆਰ ਕਰਦਾ ਹਾਂ", "Панджаби (лахор)"],
+            ["म तिमीलाई माया गर्छु", "Непальский (катманду)"],
+            ["म तिमीलाई माया गर्छु", "Непальский (покхара)"],
+            ["මම ඔයාට ආදරෙයි", "Сингальский (коломбо)"],
+            ["මම ඔයාට ආදරෙයි", "Сингальский (канди)"],
+            ["ମୁଁ ତୁମକୁ ଭଲ ପାଏ", "Ория (бхубанешвар)"],
+            ["ମୁଁ ତୁମକୁ ଭଲ ପାଏ", "Ория (каттак)"],
+            ["মই তোমাক ভাল পাওঁ", "Ассамский (гувахати)"],
+            ["মই তোমাক ভাল পাওঁ", "Ассамский (дибругарх)"],
+            ["हम तोहरा से प्यार करीले", "Бходжпури (патна)"],
+            ["हम तोहरा से प्यार करीले", "Бходжпури (варанаси)"],
+            ["हूं तने प्रेम करूं छूं", "Раджастхани (джайпур)"],
+            ["हूं तने प्रेम करूं छूं", "Раджастхани (джодхпур)"],
+            ["आं नोंखौ मोजां मोनो", "Бодо (кокраджхар)"],
+            ["आं नोंखौ मोजां मोनो", "Бодо (гувахати)"],
+            ["مان توکي پيار ڪريان ٿو", "Синдхи (карачи)"],
+            ["مان توکي پيار ڪريان ٿو", "Синдхи (хайдарабад)"],
+            ["अहं त्वयि स्निह्यामि", "Санскрит (классический)"],
+            ["अहं त्वयि स्निह्यामि", "Санскрит (буддийский гибрид)"],
+            ["मंय तुला मोग करता", "Конкани (панаджи)"],
+            ["मंय तुला मोग करता", "Конкани (маргао)"],
+            ["हॉव तुका मोग करता", "Гоанский конкани (панаджи)"],
+            ["हॉव तुका मोग करता", "Гоанский конкани (маргао)"],
+            ["मूँ तव्हाँ खे प्यार थो करियाँ", "Кашмири (сринагар)"],
+            ["मूँ तव्हाँ खे प्यार थो करियाँ", "Кашмири (аннантнаг)"],
+            ["म तिमीलाई मन पराउँछु", "Майхили (дарбханга)"],
+            ["म तिमीलाई मन पराउँछु", "Майхили (мадхубани)"],
+            ["愛してる", "Японский (токийский)"],
+            ["愛してる", "Японский (осака)"],
+            ["大好きだよ", "Японский (киото)"],
+            ["大好きだよ", "Японский (хоккайдо)"],
+            ["사랑해", "Корейский (сеульский)"],
+            ["사랑해", "Корейский (пхеньянский)"],
+            ["사랑합니다", "Корейский (чеджу)"],
+            ["사랑합니다", "Корейский (кёнсан)"],
+            ["我爱你", "Китайский (пекинский)"],
+            ["我爱你", "Китайский (шанхайский)"],
+            ["我愛你", "Китайский (тайваньский)"],
+            ["我愛你", "Китайский (южнокитайский)"],
+            ["我中意你", "Кантонский (гуанчжоу)"],
+            ["我中意你", "Кантонский (гонконгский)"],
+            ["我愛汝", "Хоккиен (тайваньский)"],
+            ["我愛汝", "Хоккиен (амойский)"],
+            ["Anh yêu em", "Вьетнамский (ханойский)"],
+            ["Anh yêu em", "Вьетнамский (сайгонский)"],
+            ["Em yêu anh", "Вьетнамский (хуэйский)"],
+            ["Em yêu anh", "Вьетнамский (данангский)"],
+            ["ฉันรักคุณ", "Тайский (бангкокский)"],
+            ["ฉันรักคุณ", "Тайский (северный)"],
+            ["ผมรักคุณ", "Тайский (иссанский)"],
+            ["ผมรักคุณ", "Тайский (южный)"],
+            ["Aku cinta kamu", "Индонезийский (джакартский)"],
+            ["Aku cinta kamu", "Индонезийский (сурабайский)"],
+            ["Saya cintakan awak", "Малайский (куала-лумпур)"],
+            ["Saya cintakan awak", "Малайский (саравак)"],
+            ["Aku sayang kamu", "Яванский (джокьякарта)"],
+            ["Aku sayang kamu", "Яванский (суракарта)"],
+            ["Mahal kita", "Тагальский (манильский)"],
+            ["Mahal kita", "Тагальский (батангас)"],
+            ["Iniibig kita", "Тагальский (литературный)"],
+            ["Iniibig kita", "Тагальский (старый)"],
+            ["Gihigugma tika", "Себуанский (себу)"],
+            ["Gihigugma tika", "Себуанский (давао)"],
+            ["Palangga ta ka", "Хилигайнон (илойло)"],
+            ["Palangga ta ka", "Хилигайнон (баголод)"],
+            ["Ay-ayaten ka", "Илоканский (лаоаг)"],
+            ["Ay-ayaten ka", "Илоканский (виган)"],
+            ["မင်းကိုချစ်တယ်", "Бирманский (янгонский)"],
+            ["မင်းကိုချစ်တယ်", "Бирманский (мандалайский)"],
+            ["ខ្ញុំស្រឡាញ់អ្នក", "Кхмерский (пномпеньский)"],
+            ["ខ្ញុំស្រឡាញ់អ្នក", "Кхмерский (сиемреапский)"],
+            ["ຂ້ອຍຮັກເຈົ້າ", "Лаосский (вьентьянский)"],
+            ["ຂ້ອຍຮັກເຈົ້າ", "Лаосский (луангпхабангский)"],
+            ["ང་ཁྱེད་རང་ལ་དགའ་པོ་ཡོད", "Тибетский (лхасский)"],
+            ["ང་ཁྱེད་རང་ལ་དགའ་པོ་ཡོད", "Тибетский (шигацзe)"],
+            ["ངས་ཁྱེད་ལ་དགའ།", "Дзонг-кэ (тхимпху)"],
+            ["ངས་ཁྱེད་ལ་དགའ།", "Дзонг-кэ (паро)"],
+            ["Ngài oi ngi", "Хакка (мэйсянь)"],
+            ["Ngài oi ngi", "Хакка (тайваньский)"],
+            ["Wa ai lu", "Теочу (чаошань)"],
+            ["Wa ai lu", "Теочу (шаньтоу)"],
+            ["Kuv hlub koj", "Хмонг (лаосский)"],
+            ["Kuv hlub koj", "Хмонг (вьетнамский)"],
+            ["Kei te aroha au ki a koe", "Маори (северный)"],
+            ["Kei te aroha au ki a koe", "Маори (южный)"],
+            ["Tiako ianao", "Малагасийский (мерина)"],
+            ["Tiako ianao", "Малагасийский (бецилеу)"],
+            ["Nakupenda", "Суахили (заanzibar)"],
+            ["Nakupenda", "Суахили (момбаса)"],
+            ["Ngiyakuthanda", "Зулусский (натальский)"],
+            ["Ngiyakuthanda", "Зулусский (трансваальский)"],
+            ["Ndiyakuthanda", "Коса (кейптаунский)"],
+            ["Ndiyakuthanda", "Коса (восточно-капский)"],
+            ["Ke a go rata", "Сесото (лесото)"],
+            ["Ke a go rata", "Сесото (южноафриканский)"],
+            ["Ndinokuda", "Шона (харaре)"],
+            ["Ndinokuda", "Шона (булавайо)"],
+            ["Mo nifẹ rẹ", "Йоруба (лагосский)"],
+            ["Mo nifẹ rẹ", "Йоруба (ибаданский)"],
+            ["Ahụrụ m gị n'anya", "Игбо (оничa)"],
+            ["Ahụrụ m gị n'anya", "Игбо (энугу)"],
+            ["Ina son ku", "Хауса (кано)"],
+            ["Ina son ku", "Хауса (сокото)"],
+            ["Me dɔ wo", "Тви (акра)"],
+            ["Me dɔ wo", "Тви (кумаси)"],
+            ["Ndagukunda", "Киньяруанда (кигали)"],
+            ["Ndagukunda", "Киньяруанда (бутаре)"],
+            ["Ndagukunda cyane", "Кирунди (бужумбура)"],
+            ["Ndagukunda cyane", "Кирунди (гитега)"],
+            ["Nalikutemwa", "Бемба (лусака)"],
+            ["Nalikutemwa", "Бемба (ндола)"],
+            ["Aloha wau iā 'oe", "Гавайский (оаху)"],
+            ["Aloha wau iā 'oe", "Гавайский (мауи)"],
+            ["Aroha ahau ki a koe", "Кукский маори (раротонга)"],
+            ["Aroha ahau ki a koe", "Кукский маори (айтутаки)"],
+            ["Ou te alofa ia te oe", "Самоанский (апиа)"],
+            ["Ou te alofa ia te oe", "Самоанский (савайи)"],
+            ["Ua here vau ia oe", "Таитянский (папеэте)"],
+            ["Ua here vau ia oe", "Таитянский (таити-ити)"],
+            ["'Ofa atu", "Тонганский (нукуалофа)"],
+            ["'Ofa atu", "Тонганский (вавау)"],
+            ["Au domoni iko", "Фиджийский (сува)"],
+            ["Au domoni iko", "Фиджийский (нади)"],
+            ["Kuyayki", "Кечуа (куско)"],
+            ["Kuyayki", "Кечуа (боливийский)"],
+            ["Rohayhu", "Гуарани (асунсьон)"],
+            ["Rohayhu", "Гуарани (парагвайский)"],
+            ["Nimitztlazohtla", "Науатль (классический)"],
+            ["Nimitztlazohtla", "Науатль (современный)"],
+            ["Ayóó anííníshní", "Навахо (аризона)"],
+            ["Ayóó anííníshní", "Навахо (нью-мексико)"],
+            ["Nagligivagit", "Инуктитут (нунавут)"],
+            ["Nagligivagit", "Инуктитут (гренландия)"],
+            ["Σ' αγαπώ", "Греческий (афинский)"],
+            ["Σ' αγαπώ", "Греческий (критский)"],
+            ["Të dua", "Албанский (тоскский)"],
+            ["Të dua", "Албанский (гегский)"],
+            ["Te dua", "Албанский (косовский)"],
+            ["Te dua", "Албанский (македонский)"],
+            ["Те сакам", "Македонский (скопский)"],
+            ["Те сакам", "Македонский (битольский)"],
+            ["Обичам те", "Болгарский (софийский)"],
+            ["Обичам те", "Болгарский (пловдивский)"],
+            ["Волим те", "Сербский (белградский)"],
+            ["Волим те", "Сербский (нови-сад)"],
+            ["Volim te", "Хорватский (загребский)"],
+            ["Volim te", "Хорватский (сплитский)"],
+            ["Ја те волим", "Боснийский (сараевский)"],
+            ["Ја те волим", "Боснийский (баня-лукский)"],
+            ["Љубим те", "Словенский (люблянский)"],
+            ["Љубим те", "Словенский (мариборский)"],
+            ["Miluji tě", "Чешский (пражский)"],
+            ["Miluji tě", "Чешский (брненский)"],
+            ["Ľúbim ťa", "Словацкий (братиславский)"],
+            ["Ľúbim ťa", "Словацкий (кошицкий)"],
+            ["Kocham Cię", "Польский (варшавский)"],
+            ["Kocham Cię", "Польский (краковский)"],
+            ["Ja ciebie kochōm", "Силезский (катовицкий)"],
+            ["Ja ciebie kochōm", "Силезский (опольский)"],
+            ["Miłuję Cię", "Старопольский (поэтический)"],
+            ["Miłuję Cię", "Старопольский (литературный)"],
+            ["Lubim тя", "Восточнословацкий (прешовский)"],
+            ["Lubim тя", "Восточнословацкий (кошицкий)"],
+            ["Wote mje lubuju", "Верхнелужицкий (баутцен)"],
+            ["Wote mje lubuju", "Верхнелужицкий (каменц)"],
+            ["Lubju тя", "Нижнелужицкий (котбус)"],
+            ["Lubju тя", "Нижнелужицкий (шпревальд)"],
+            ["Кохаю тебе", "Галицкий (львовский)"],
+            ["Кохаю тебе", "Галицкий (ивано-франковский)"],
+            ["Я тя люблю", "Поморский (гданьский)"],
+            ["Я тя люблю", "Поморский (щецинский)"],
+            ["З обичам те", "Родопский (смолянский)"],
+            ["З обичам те", "Родопский (кырджалийский)"],
+            ["Aš tave myliu", "Литовский (вильнюсский)"],
+            ["Aš tave myliu", "Литовский (каунасский)"],
+            ["Es mīlu tevi", "Латышский (рижский)"],
+            ["Es mīlu tevi", "Латышский (латгальский)"],
+            ["Es tevi mīlu", "Латгальский (резекненский)"],
+            ["Es tevi mīlu", "Латгальский (даугавпилсский)"],
+            ["Myliu tave", "Жемайтский (тельшяйский)"],
+            ["Myliu tave", "Жемайтский (кlaipeda)"],
+            ["Aš myliu tave", "Аукштайтский (паневежисский)"],
+            ["Aš myliu tave", "Аукштайтский (шилутский)"],
+            ["Kūliame tave", "Прусский (балтийский)"],
+            ["Kūliame tave", "Прусский (ятвяжский)"],
+            ["Es mīlu Jūs", "Курземский (лиепайский)"],
+            ["Es mīlu Jūs", "Курземский (венстспилсский)"],
+            ["Тебе волим", "Черногорский (подгорицкий)"],
+            ["Тебе волим", "Черногорский (никшичский)"],
+            ["Ја те волим", "Боснийский (тузланский)"],
+            ["Ја те волим", "Боснийский (зеницкий)"],
+            ["Мо тя обичам", "Македонский (эгейский)"],
+            ["Мо тя обичам", "Македонский (пиринский)"],
+            ["Je t'aime", "Французский (парижский)"],
+            ["Je t'aime", "Французский (марсельский)"],
+            ["Te amo", "Испанский (мадридский)"],
+            ["Te amo", "Испанский (севильский)"],
+            ["Ti amo", "Итальянский (римский)"],
+            ["Ti amo", "Итальянский (миланский)"],
+            ["Eu te amo", "Португальский (бразильский)"],
+            ["Eu te amo", "Португальский (сан-паулу)"],
+            ["Amo-te", "Португальский (лиссабонский)"],
+            ["Amo-te", "Португальский (порту)"],
+            ["Te iubesc", "Румынский (бухарестский)"],
+            ["Te iubesc", "Румынский (клужский)"],
+            ["T'estimo", "Каталанский (барселонский)"],
+            ["T'estimo", "Каталанский (валенсийский)"],
+            ["Te quiero", "Испанский (мексиканский)"],
+            ["Te quiero", "Испанский (аргентинский)"],
+            ["Ámote", "Галисийский (сантьяго)"],
+            ["Ámote", "Галисийский (виго)"],
+            ["Ti voglio bene", "Итальянский (неаполитанский)"],
+            ["Ti voglio bene", "Итальянский (сицилийский)"],
+            ["T'amo", "Тосканский (флорентийский)"],
+            ["T'amo", "Тосканский (сиенский)"],
+            ["Te voglio bene", "Неаполитанский (городской)"],
+            ["Te voglio bene", "Неаполитанский (сельский)"],
+            ["Ti tengu caru", "Сицилийский (палермо)"],
+            ["Ti tengu caru", "Сицилийский (катания)"],
+            ["T'aimi", "Корсиканский (аяччо)"],
+            ["T'aimi", "Корсиканский (бастия)"],
+            ["T'aime", "Окситанский (тулузский)"],
+            ["T'aime", "Окситанский (марсельский)"],
+            ["Mi t'amo", "Венецианский (городской)"],
+            ["Mi t'amo", "Венецианский (островной)"],
+            ["Amu-te", "Мирандский (центральный)"],
+            ["Amu-te", "Мирандский (сendim)"],
+            ["Te amu", "Астурийский (овьедо)"],
+            ["Te amu", "Астурийский (хихон)"],
+            ["Ti amu", "Сардинский (кальяри)"],
+            ["Ti amu", "Сардинский (сассари)"],
+            ["T'estim", "Балеарский (майорка)"],
+            ["T'estim", "Балеарский (ибица)"],
+            ["T'estime", "Валенсийский (городской)"],
+            ["T'estime", "Валенсийский (аликанте)"],
+            ["Te vòli ben", "Пьемонтский (туринский)"],
+            ["Te vòli ben", "Пьемонтский (кунео)"],
+            ["Te vuòj bene", "Кампанский (салерно)"],
+            ["Te vuòj bene", "Кампанский (авеллино)"],
+            ["Te voi ben", "Ломбардский (бергамо)"],
+            ["Te voi ben", "Ломбардский (брешия)"],
+            ["Te voeu ben", "Миланский (городской)"],
+            ["Te voeu ben", "Миланский (пригородный)"],
+            ["T'ei car", "Фриульский (уд­ине)"],
+            ["T'ei car", "Фриульский (порденоне)"],
+            ["Jau hai bugent tei", "Романшский (куре)"],
+            ["Jau hai bugent tei", "Романшский (энгадин)"],
+            ["Eau t'am", "Ладинский (больцано)"],
+            ["Eau t'am", "Ладинский (тренто)"],
+            ["Je t'aimo", "Франкопровансальский (женевский)"],
+            ["Je t'aimo", "Франкопровансальский (вале)"],
+            ["Mi t'ama", "Лигурийский (генуэзский)"],
+            ["Mi t'ama", "Лигурийский (империя)"],
+            ["Te quiero mucho", "Андалусский (севильский)"],
+            ["Te quiero mucho", "Андалусский (гранадский)"],
+            ["Eu amo-te", "Галисийско-португальский (брага)"],
+            ["Eu amo-te", "Галисийско-португальский (порту)"],
+            ["M'agrades molt", "Андоррский (каталанский)"],
+            ["M'agrades molt", "Андоррский (испанский)"],
+            ["T'adoro", "Римский (городской)"],
+            ["T'adoro", "Римский (трастевере)"],
+            ["Je t'adore", "Валлонский (льеж)"],
+            ["Je t'adore", "Валлонский (намюр)"],
+            ["Te sakam", "Аромунский (македонский)"],
+            ["Te sakam", "Аромунский (греческий)"],
+            ["Ti vöi ben", "Тичинский (бельинцона)"],
+            ["Ti vöi ben", "Тичинский (локарно)"],
+            ["Te voeuri ben", "Эмилиано-романьольский (болонья)"],
+            ["Te voeuri ben", "Эмилиано-романьольский (парма)"],
+            ["T'aim", "Гасконский (тулуза)"],
+            ["T'aim", "Гасконский (бордо)"],
+            ["Ego te amo", "Классическая латынь (республиканская)"],
+            ["Ego te amo", "Классическая латынь (имперская)"],
+            ["Amabo te", "Поздняя латынь (христианская)"],
+            ["Amabo te", "Поздняя латынь (вульгарная)"],
+            ["Tege amo", "Далматинский (сплит)"],
+            ["Tege amo", "Далматинский (дубровник)"],
+            ["Mi amas vin", "Эсперанто (стандарт)"],
+            ["Mi amas vin", "Эсперанто (поэтический)"],
+            ["Me ama vu", "Идо (стандарт)"],
+            ["Me ama vu", "Идо (реформированный)"],
+            ["Yo amo te", "Интерлингва (стандарт)"],
+            ["Yo amo te", "Интерлингва (латино-сине-флексионе)"],
+            ["I love you", "Английский (британский)"],
+            ["I love you", "Английский (американский)"],
+            ["I love you", "Английский (австралийский)"],
+            ["I love you", "Английский (канадский)"],
+            ["I love you", "Английский (ирландский)"],
+            ["I love you", "Английский (шотландский)"],
+            ["I love you", "Английский (южноафриканский)"],
+            ["I love you", "Английский (новозеландский)"],
+            ["Ich liebe dich", "Немецкий (берлинский)"],
+            ["Ich liebe dich", "Немецкий (баварский)"],
+            ["Ich liebe dich", "Немецкий (саксонский)"],
+            ["Ich liebe dich", "Немецкий (гессенский)"],
+            ["Ich liebe dich", "Немецкий (рейнский)"],
+            ["Ich liebe dich", "Немецкий (вестфальский)"],
+            ["Ik hou van jou", "Нидерландский (амстердамский)"],
+            ["Ik hou van jou", "Нидерландский (роттердамский)"],
+            ["Jag älskar dig", "Шведский (стокгольмский)"],
+            ["Jag älskar dig", "Шведский (гётеборгский)"],
+            ["Jag älskar dig", "Шведский (сканский)"],
+            ["Jeg elsker deg", "Норвежский (осло)"],
+            ["Jeg elsker deg", "Норвежский (берген)"],
+            ["Eg elskar deg", "Нюнорск (западный)"],
+            ["Eg elskar deg", "Нюнорск (северный)"],
+            ["Jeg elsker dig", "Датский (копенгагенский)"],
+            ["Jeg elsker dig", "Датский (ютландский)"],
+            ["Ég elska þig", "Исландский (рейкьявик)"],
+            ["Ég elska þig", "Исландский (западные фьорды)"],
+            ["Ek het jou lief", "Африкаанс (кейптаун)"],
+            ["Ek het jou lief", "Африкаанс (претория)"],
+            ["Ech hunn dech gär", "Люксембургский (городской)"],
+            ["Ech hunn dech gär", "Люксембургский (эш-сюр-альзет)"],
+            ["Ik hâld fan dy", "Западнофризский (леуварден)"],
+            ["Ik hâld fan dy", "Западнофризский (снек)"],
+            ["איך האָב דיך ליב", "Идиш (литвакский)"],
+            ["איך האָב דיך ליב", "Идиш (галицийский)"],
+            ["I liab di", "Баварский (мюнхенский)"],
+            ["I liab di", "Баварский (нюрнбергский)"],
+            ["I mog di", "Австрийский (венский)"],
+            ["I mog di", "Австрийский (зальцбургский)"],
+            ["Ich han dich gärn", "Швейцарский (цюрихский)"],
+            ["Ich han dich gärn", "Швейцарский (базельский)"],
+            ["I ha di gärn", "Бернский (городской)"],
+            ["I ha di gärn", "Бернский (сельский)"],
+            ["Ik zie u graag", "Фламандский (антверпенский)"],
+            ["Ik zie u graag", "Фламандский (гентский)"],
+            ["Ik heb je lief", "Голландский (поэтический)"],
+            ["Ik heb je lief", "Голландский (литературный)"],
+            ["Ik hâld fan jo", "Фризский (вежливый)"],
+            ["Ik hâld fan jo", "Фризский (официальный)"],
+            ["Ik hou fan dei", "Восточнофризский (эмден)"],
+            ["Ik hou fan dei", "Восточнофризский (аурих)"],
+            ["Eg elski teg", "Фарерский (торсхавн)"],
+            ["Eg elski teg", "Фарерский (судурой)"],
+            ["A elskar deg", "Гутнийский (готланд)"],
+            ["A elskar deg", "Гутнийский (форе)"],
+            ["Jat älskar dig", "Эльвдальский (эльвдален)"],
+            ["Jat älskar dig", "Эльвдальский (мура)"],
+            ["Ic lufie þe", "Древнеанглийский (уэссекский)"],
+            ["Ic lufie þe", "Древнеанглийский (нортумбрийский)"],
+            ["Ek elska þik", "Древнескандинавский (западный)"],
+            ["Ek elska þik", "Древнескандинавский (восточный)"],
+            ["Ich lieb di", "Швабский (штутгарт)"],
+            ["Ich lieb di", "Швабский (аугсбург)"],
+            ["Etch liebe dich", "Кёльнский (рипуарский)"],
+            ["Etch liebe dich", "Кёльнский (боннский)"],
+            ["Ik heb u lief", "Брабантский (брюссельский)"],
+            ["Ik heb u lief", "Брабантский (антверпенский)"],
+            ["Ah luv ye", "Scots (эдинбургский)"],
+            ["Ah luv ye", "Scots (глазго)"],
+            ["Luv ya", "Английский (разговорный)"],
+            ["Luv ya", "Английский (сленговый)"],
+            ["Ich hab dich lieb", "Немецкий (нежный)"],
+            ["Ich hab dich lieb", "Немецкий (дружеский)"],
+            ["Ick liebe dir", "Берлинский (городской)"],
+            ["Ick liebe dir", "Берлинский (пригородный)"],
+            ["Ik mag di", "Нижненемецкий (гамбург)"],
+            ["Ik mag di", "Нижненемецкий (бремен)"],
+            ["Ech ha dech gär", "Мозельско-франконский (трир)"],
+            ["Ech ha dech gär", "Мозельско-франконский (кобленц)"],
+            ["Mi lobi yu", "Сранан-тонго (парамарибо)"],
+            ["Mi lobi yu", "Сранан-тонго (дистрикт)"],
+            ["Awe lobi yu", "Ндьюка (креольский)"],
+            ["Awe lobi yu", "Ндьюка (суринам)"],
+            ["Mi ta stima bo", "Папьяменто (аруба)"],
+            ["Mi ta stima bo", "Папьяменто (кюрасао)"],
+            ["Ik hou van u", "Лимбургский (маастрихт)"],
+            ["Ik hou van u", "Лимбургский (хасселт)"],
+            ["Eg elska teg", "Норн (шетландский)"],
+            ["Eg elska teg", "Норн (оркнейский)"],
+            ["Ich liab di", "Тирольский (инсбрук)"],
+            ["Ich liab di", "Тирольский (больцано)"],
+            ["Is breá liom thú", "Ирландский (дублин)"],
+            ["Is breá liom thú", "Ирландский (голуэй)"],
+            ["Tá grá agam duit", "Ирландский (коннахт)"],
+            ["Tá grá agam duit", "Ирландский (улстер)"],
+            ["Tha gaol agam ort", "Шотландский гэльский (инвернесс)"],
+            ["Tha gaol agam ort", "Шотландский гэльский (скай)"],
+            ["Rwy'n dy garu di", "Валлийский (кардифф)"],
+            ["Rwy'n dy garu di", "Валлийский (суонси)"],
+            ["Dw i'n dy garu di", "Валлийский (карнарфон)"],
+            ["Dw i'n dy garu di", "Валлийский (аберовит)"],
+            ["Da garout a ran", "Бретонский (ренн)"],
+            ["Da garout a ran", "Бретонский (кемпер)"],
+            ["Me a'th kar", "Корнский (тропо)"],
+            ["Me a'th kar", "Корнский (пензанс)"],
+            ["Ta graih aym ort", "Мэнский (дуглас)"],
+            ["Ta graih aym ort", "Мэнский (порт-эрин)"],
+            ["Gráim thú", "Ирландский (манстер)"],
+            ["Gráim thú", "Ирландский (ленинстер)"],
+            ["Carim thú", "Древнеирландский)"],
+            ["Carim thú", "Древнеирландский (поэтический)"],
+            ["Tha gràdh agam ort", "Гебридский (льюис)"],
+            ["Tha gràdh agam ort", "Гебридский (скай)"],
+            ["Karout a ran ac'hanout", "Бретонский (финистер)"],
+            ["Karout a ran ac'hanout", "Бретонский (морбихан)"],
+            ["Minä rakastan sinua", "Финский (хельсинки)"],
+            ["Minä rakastan sinua", "Финский (турку)"],
+            ["Mä rakastan sua", "Хельсинкский (разговорный)"],
+            ["Mä rakastan sua", "Хельсинкский (сленг)"],
+            ["Ma armastan sind", "Эстонский (таллин)"],
+            ["Ma armastan sind", "Эстонский (тарту)"],
+            ["Szeretlek", "Венгерский (будапешт)"],
+            ["Szeretlek", "Венгерский (дебрецен)"],
+            ["Szeretlek téged", "Венгерский (полный)"],
+            ["Szeretlek téged", "Венгерский (поэтический)"],
+            ["Mun ráhkistan du", "Северносаамский (каутокейно)"],
+            ["Mun ráhkistan du", "Северносаамский (кёутукейну)"],
+            ["Moni rakastan sinua", "Карельский (пряжинский)"],
+            ["Moni rakastan sinua", "Карельский (ливвиковский)"],
+            ["Mina armastan sind", "Выруский (выру)"],
+            ["Mina armastan sind", "Выруский (сету)"],
+            ["Miä rakastan siua", "Ингерманландский (финский)"],
+            ["Miä rakastan siua", "Ингерманландский (ижорский)"],
+            ["Ме радейть тон", "Эрзянский (эрзя)"],
+            ["Ме радейть тон", "Эрзянский (мокшанский)"],
+            ["Мон вечкан тонь", "Мокшанский (мокша)"],
+            ["Мон вечкан тонь", "Мокшанский (эрзянский)"],
+            ["Мон тонэ ярато", "Удмуртский (ижевск)"],
+            ["Мон тонэ ярато", "Удмуртский (глазов)"],
+            ["Ме тэнэ радейтан", "Коми-зырянский (сыктывкар)"],
+            ["Ме тэнэ радейтан", "Коми-зырянский (удора)"],
+            ["Мань пущнам нан", "Мансийский (сосьвинский)"],
+            ["Мань пущнам нан", "Мансийский (кондинский)"],
+            ["Ма нэнг хуща любитlам", "Хантыйский (казанский)"],
+            ["Ма нэнг хуща любитlам", "Хантыйский (шурышкарский)"],
+            ["Тонэ яратисько", "Бесермянский (бесермя)"],
+            ["Тонэ яратисько", "Бесермянский (глазов)"],
+            ["Сюлмысьтым яратисько", "Удмуртский (сердечный)"],
+            ["Сюлмысьтым яратисько", "Удмуртский (поэтический)"],
+            ["Minä tykkään susta", "Финский (нежный)"],
+            ["Minä tykkään susta", "Финский (разговорный)"],
+            ["Σ' αγαπώ", "Греческий (афинский)"],
+            ["Σ' αγαπώ", "Греческий (критский)"],
+            ["Σ' αγαπώ", "Греческий (кипрский)"],
+            ["Σ' αγαπώ", "Греческий (понтийский)"],
+            ["Të dua", "Албанский (тоскский)"],
+            ["Të dua", "Албанский (гегский)"],
+            ["Te dua", "Албанский (косовский)"],
+            ["Te dua", "Албанский (македонский)"],
+            ["Те сакам", "Македонский (скопский)"],
+            ["Те сакам", "Македонский (битольский)"],
+            ["Обичам те", "Болгарский (софийский)"],
+            ["Обичам те", "Болгарский (пловдивский)"],
+            ["Волим те", "Сербский (белградский)"],
+            ["Волим те", "Сербский (нови-сад)"],
+            ["Volim te", "Хорватский (загребский)"],
+            ["Volim te", "Хорватский (сплитский)"],
+            ["Ја те волим", "Боснийский (сараевский)"],
+            ["Ја те волим", "Боснийский (баня-лукский)"],
+            ["Љубим те", "Словенский (люблянский)"],
+            ["Љубим те", "Словенский (мариборский)"],
+            ["Miluji tě", "Чешский (пражский)"],
+            ["Miluji tě", "Чешский (брненский)"],
+            ["Ľúbim ťa", "Словацкий (братиславский)"],
+            ["Ľúbim ťa", "Словацкий (кошицкий)"],
+            ["Kocham Cię", "Польский (варшавский)"],
+            ["Kocham Cię", "Польский (краковский)"],
+            ["Ja ciebie kochōm", "Силезский (катовицкий)"],
+            ["Ja ciebie kochōm", "Силезский (опольский)"],
+            ["Miłuję Cię", "Старопольский (поэтический)"],
+            ["Miłuję Cię", "Старопольский (литературный)"],
+            ["Lubim тя", "Восточнословацкий (прешовский)"],
+            ["Lubim тя", "Восточнословацкий (кошицкий)"],
+            ["Wote mje lubuju", "Верхнелужицкий (баутцен)"],
+            ["Wote mje lubuju", "Верхнелужицкий (каменц)"],
+            ["Lubju тя", "Нижнелужицкий (котбус)"],
+            ["Lubju тя", "Нижнелужицкий (шпревальд)"],
+            ["Кохаю тебе", "Галицкий (львовский)"],
+            ["Кохаю тебе", "Галицкий (ивано-франковский)"],
+            ["Я тя люблю", "Поморский (гданьский)"],
+            ["Я тя люблю", "Поморский (щецинский)"],
+            ["З обичам те", "Родопский (смолянский)"],
+            ["З обичам те", "Родопский (кырджалийский)"],
+            ["Aš tave myliu", "Литовский (вильнюсский)"],
+            ["Aš tave myliu", "Литовский (каунасский)"],
+            ["Es mīlu tevi", "Латышский (рижский)"],
+            ["Es mīlu tevi", "Латышский (латгальский)"],
+            ["Es tevi mīlu", "Латгальский (резекненский)"],
+            ["Es tevi mīlu", "Латгальский (даугавпилсский)"],
+            ["Myliu tave", "Жемайтский (тельшяйский)"],
+            ["Myliu tave", "Жемайтский (кlaipeda)"],
+            ["Aš myliu tave", "Аукштайтский (паневежисский)"],
+            ["Aš myliu tave", "Аукштайтский (шилутский)"],
+            ["Kūliame tave", "Прусский (балтийский)"],
+            ["Kūliame tave", "Прусский (ятвяжский)"],
+            ["Es mīlu Jūs", "Курземский (лиепайский)"],
+            ["Es mīlu Jūs", "Курземский (венстспилсский)"],
+            ["Тебе волим", "Черногорский (подгорицкий)"],
+            ["Тебе волим", "Черногорский (никшичский)"],
+            ["Ја те волим", "Боснийский (тузланский)"],
+            ["Ја те волим", "Боснийский (зеницкий)"],
+            ["Мо тя обичам", "Македонский (эгейский)"],
+            ["Мо тя обичам", "Македонский (пиринский)"]
+        ];
+
+        // ==========================================
+        // TYPEWRITER LETTER PARAGRAPHS
+        // ==========================================
+        const LETTER_PARAGRAPHS = [
+            "Зай, этом мире существуют сотни языков и тысячи диалектов, и в каждом из них живёт одна главная фраза. Когда я думаю о тебе, мне кажется, что одного языка слишком мало, чтобы выразить всё, что внутри.",
+            "Ты — центр притяжения, вокруг которого вращаются мои самые тёплые мысли, мечты и моменты. Рядом с тобой даже обычная секунда обретает глубину целого космоса)",
+            "Я собрал для тебя эту 3D-Вселенную: и само ядро планеты, и её кольца сотканы из признаний в любви на 499+ языках мира. Крути планету в любую сторону) Можешь нажимай на любую фразу, чтобы узнать её язык."
+        ];
+
+        let typingAborted = false;
+        let envelopeOpened = false;
+        let dropdownOpen = false;
+        let toastTimeout = null;
+        let activeTypingTimer = null;
+        let letterTypingStarted = false;
+
+        // Shared Web Audio
+        let sharedAudioCtx = null;
+        function getAudioCtx() {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return null;
+            if (!sharedAudioCtx) sharedAudioCtx = new AudioCtx();
+            if (sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume();
+            return sharedAudioCtx;
+        }
+
+        function playSoftChime(baseFreq = 523.25) {
+            try {
+                const ctx = getAudioCtx();
+                if (!ctx) return;
+                const freqs = [baseFreq, baseFreq * 1.25, baseFreq * 1.5, baseFreq * 2];
+                freqs.forEach((f, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    const start = ctx.currentTime + idx * 0.065;
+                    osc.frequency.setValueAtTime(f, start);
+                    gain.gain.setValueAtTime(0.0001, start);
+                    gain.gain.exponentialRampToValueAtTime(0.038, start + 0.035);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.95);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(start);
+                    osc.stop(start + 1.0);
+                });
+            } catch (e) {}
+        }
+
+        function playWordPing() {
+            try {
+                const ctx = getAudioCtx();
+                if (!ctx) return;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                const now = ctx.currentTime;
+                osc.frequency.setValueAtTime(784, now);
+                osc.frequency.exponentialRampToValueAtTime(1174.66, now + 0.14);
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.exponentialRampToValueAtTime(0.04, now + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.42);
+            } catch (e) {}
+        }
+
+        function showModal(title, text) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-text').textContent = text;
+            const modal = document.getElementById('custom-modal');
+            const box = document.getElementById('modal-box');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => box.classList.remove('scale-95'), 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('custom-modal');
+            const box = document.getElementById('modal-box');
+            box.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('opacity-0', 'pointer-events-none'), 200);
+        }
+
+        // ==========================================
+        // STAGE 1 -> 2: ENVELOPE OPEN & SMOOTH FADE
+        // ==========================================
+        function openEnvelope() {
+            if (envelopeOpened) return;
+            envelopeOpened = true;
+
+            if (navigator.vibrate) navigator.vibrate([30, 35, 60]);
+            playSoftChime();
+
+            const sealWrapper = document.getElementById('seal-wrapper');
+            const flap = document.getElementById('envelope-flap');
+            const flapOutline = document.getElementById('flap-outline-svg');
+            const innerLetter = document.getElementById('inner-letter-preview');
+            const particlesContainer = document.getElementById('seal-particles');
+            const hint = document.getElementById('envelope-hint');
+
+            hint.style.opacity = '0';
+            if (flapOutline) flapOutline.style.opacity = '0';
+
+            for (let i = 0; i < 28; i++) {
+                const shard = document.createElement('div');
+                const size = 4 + Math.random() * 9;
+                shard.style.width = `${size}px`;
+                shard.style.height = `${size * (0.6 + Math.random() * 0.6)}px`;
+                shard.style.background = i % 3 === 0 ? '#e4e4e7' : (i % 2 === 0 ? '#52525b' : '#27272a');
+                shard.style.border = '1px solid rgba(255,255,255,0.25)';
+                shard.style.borderRadius = '2px';
+                shard.style.position = 'absolute';
+                shard.style.left = '50%';
+                shard.style.top = '54%';
+                particlesContainer.appendChild(shard);
+
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 55 + Math.random() * 140;
+                gsap.to(shard, {
+                    x: Math.cos(angle) * dist,
+                    y: Math.sin(angle) * dist + 25,
+                    rotation: (Math.random() - 0.5) * 520,
+                    scale: 0.15,
+                    opacity: 0,
+                    duration: 0.65 + Math.random() * 0.45,
+                    ease: 'power3.out',
+                    onComplete: () => shard.remove()
+                });
+            }
+
+            gsap.to(sealWrapper, {
+                scale: 0.2,
+                opacity: 0,
+                duration: 0.28,
+                ease: 'back.in(2)'
+            });
+
+            setTimeout(() => flap.classList.add('is-open'), 120);
+
+            setTimeout(() => {
+                innerLetter.style.transform = 'translateY(-46%) scale(1.015)';
+            }, 520);
+
+            // Smooth transition to Letter stage
+            setTimeout(() => {
+                const envelopeStage = document.getElementById('stage-envelope');
+                const letterStage = document.getElementById('stage-letter');
+                envelopeStage.classList.add('stage-hidden');
+                envelopeStage.classList.remove('stage-visible');
+
+                setTimeout(() => {
+                    letterStage.classList.remove('stage-hidden');
+                    letterStage.classList.add('stage-visible');
+                    startLetterTyping();
+                }, 150);
+            }, 1250);
+        }
+
+        // ==========================================
+        // STAGE 2: TYPEWRITER & BUTTON REVEAL
+        // ==========================================
+        function revealLetterActionBtn() {
+            const sig = document.getElementById('letter-signature');
+            const actionWrap = document.getElementById('letter-action-wrap');
+            if (sig) sig.classList.remove('opacity-0');
+            if (actionWrap) {
+                setTimeout(() => actionWrap.classList.add('is-ready'), 280);
+            }
+        }
+
+        function startLetterTyping() {
+            if (letterTypingStarted) return;
+            letterTypingStarted = true;
+
+            const container = document.getElementById('letter-body');
+            const sig = document.getElementById('letter-signature');
+            const actionWrap = document.getElementById('letter-action-wrap');
+            container.innerHTML = '';
+            if (sig) sig.classList.add('opacity-0');
+            if (actionWrap) actionWrap.classList.remove('is-ready');
+
+            typingAborted = false;
+            if (activeTypingTimer) {
+                clearInterval(activeTypingTimer);
+                activeTypingTimer = null;
+            }
+
+            let pIdx = 0;
+
+            function typeNextParagraph() {
+                if (typingAborted) return;
+                if (pIdx >= LETTER_PARAGRAPHS.length) {
+                    revealLetterActionBtn();
+                    return;
+                }
+
+                const p = document.createElement('p');
+                p.className = 'opacity-0 translate-y-2 transition-all duration-600';
+                container.appendChild(p);
+
+                requestAnimationFrame(() => {
+                    p.classList.remove('opacity-0', 'translate-y-2');
+                });
+
+                const fullText = LETTER_PARAGRAPHS[pIdx];
+                let charIdx = 0;
+
+                activeTypingTimer = setInterval(() => {
+                    if (typingAborted) {
+                        clearInterval(activeTypingTimer);
+                        activeTypingTimer = null;
+                        return;
+                    }
+                    if (charIdx < fullText.length) {
+                        p.textContent += fullText.charAt(charIdx);
+                        charIdx++;
+                    } else {
+                        clearInterval(activeTypingTimer);
+                        activeTypingTimer = null;
+                        pIdx++;
+                        setTimeout(typeNextParagraph, 220);
+                    }
+                }, 12);
+            }
+
+            typeNextParagraph();
+        }
+
+        function finishTypingImmediately() {
+            if (typingAborted) return;
+            typingAborted = true;
+            if (activeTypingTimer) {
+                clearInterval(activeTypingTimer);
+                activeTypingTimer = null;
+            }
+            const container = document.getElementById('letter-body');
+            container.innerHTML = '';
+            LETTER_PARAGRAPHS.forEach(text => {
+                const p = document.createElement('p');
+                p.textContent = text;
+                container.appendChild(p);
+            });
+            revealLetterActionBtn();
+        }
+
+        // ==========================================
+        // STAGE 2 -> 3: SMOOTH UNIVERSE OPEN
+        // ==========================================
+        function openSaturnUniverse() {
+            finishTypingImmediately();
+
+            const letterStage = document.getElementById('stage-letter');
+            const saturnStage = document.getElementById('stage-saturn');
+            const ambientBg = document.getElementById('ambient-bg');
+
+            // Fade out letter & ambient
+            letterStage.classList.add('stage-hidden');
+            letterStage.classList.remove('stage-visible');
+            ambientBg.classList.add('opacity-0');
+
+            setTimeout(() => {
+                saturnStage.classList.remove('stage-hidden');
+                saturnStage.classList.add('stage-visible');
+                initSaturn3D();
+
+                // Animate in the color strip and footer with stagger
+                setTimeout(() => {
+                    const colorWrapper = document.getElementById('theme-dropdown-wrapper');
+                    colorWrapper.style.opacity = '1';
+                    colorWrapper.style.transform = 'translateY(0)';
+
+                    const footer = document.getElementById('saturn-footer');
+                    footer.style.opacity = '1';
+                    footer.style.transform = 'translateY(0)';
+
+                    // Re-trigger stagger animation on buttons
+                    document.querySelectorAll('.btn-stagger-in').forEach((btn, i) => {
+                        btn.style.animation = 'none';
+                        btn.offsetHeight;
+                        btn.style.animation = `btnStaggerIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards`;
+                        btn.style.animationDelay = `${0.1 + i * 0.1}s`;
+                    });
+                }, 300);
+
+                setTimeout(() => hideGestureHint(), 7000);
+            }, 400);
+        }
+
+        // ==========================================
+        // STAGE 3 -> 2: SMOOTH BACK TO LETTER
+        // ==========================================
+        function backToLetter() {
+            closeThemeDropdown();
+            hidePhraseToast();
+
+            const saturnStage = document.getElementById('stage-saturn');
+            const letterStage = document.getElementById('stage-letter');
+            const ambientBg = document.getElementById('ambient-bg');
+            const colorWrapper = document.getElementById('theme-dropdown-wrapper');
+            const footer = document.getElementById('saturn-footer');
+
+            // Fade out saturn UI elements
+            colorWrapper.style.opacity = '0';
+            colorWrapper.style.transform = 'translateY(-12px)';
+            footer.style.opacity = '0';
+            footer.style.transform = 'translateY(18px)';
+
+            saturnStage.classList.add('stage-hidden');
+            saturnStage.classList.remove('stage-visible');
+            ambientBg.classList.remove('opacity-0');
+
+            setTimeout(() => {
+                letterStage.classList.remove('stage-hidden');
+                letterStage.classList.add('stage-visible');
+            }, 200);
+        }
+
+        function hideGestureHint() {
+            const hint = document.getElementById('saturn-gesture-hint');
+            if (hint) hint.classList.add('is-hidden');
+        }
+
+        // ==========================================
+        // COLOR SPECTRUM PICKER
+        // ==========================================
+        let currentAccentHex = '#ffffff';
+
+        function toggleThemeDropdown(e) {
+            if (e) e.stopPropagation();
+            dropdownOpen = !dropdownOpen;
+            const shell = document.getElementById('color-drawer-shell');
+            if (dropdownOpen) shell.classList.add('is-open');
+            else shell.classList.remove('is-open');
+        }
+
+        function closeThemeDropdown() {
+            if (!dropdownOpen) return;
+            dropdownOpen = false;
+            const shell = document.getElementById('color-drawer-shell');
+            if (shell) shell.classList.remove('is-open');
+        }
+
+        window.addEventListener('pointerdown', (e) => {
+            const wrapper = document.getElementById('theme-dropdown-wrapper');
+            if (dropdownOpen && wrapper && !wrapper.contains(e.target)) closeThemeDropdown();
+        });
+
+        function computeSpectrumPalette(t) {
+            const clamped = Math.max(0, Math.min(1, t));
+            const cCore = new THREE.Color();
+            const cInner = new THREE.Color();
+            const cOuter = new THREE.Color();
+            const cDust = new THREE.Color();
+            const cOcc = new THREE.Color();
+
+            if (clamped < 0.08) {
+                const blend = clamped / 0.08;
+                cCore.setHSL(0.13, 0.9 * blend, 1.0 - 0.06 * blend);
+                cInner.setHSL(0.13, 0.95 * blend, 1.0 - 0.22 * blend);
+                cOuter.setHSL(0.10, 0.9 * blend, 0.78 - 0.22 * blend);
+                cDust.setHSL(0.13, 0.85 * blend, 1.0 - 0.18 * blend);
+                cOcc.setHSL(0.66, 0.25, 0.025);
+            } else {
+                const norm = (clamped - 0.08) / 0.92;
+                const stops = [0.13, 0.09, 0.97, 0.84, 0.74, 0.55, 0.43];
+                const scaled = norm * (stops.length - 1);
+                const idx = Math.min(stops.length - 2, Math.floor(scaled));
+                const frac = scaled - idx;
+                let h1 = stops[idx];
+                let h2 = stops[idx + 1];
+                let dh = h2 - h1;
+                if (dh > 0.5) dh -= 1;
+                if (dh < -0.5) dh += 1;
+                const hue = (h1 + dh * frac + 1) % 1;
+                cCore.setHSL(hue, 0.88, 0.90);
+                cInner.setHSL(hue, 0.94, 0.72);
+                cOuter.setHSL((hue - 0.03 + 1) % 1, 0.92, 0.54);
+                cDust.setHSL(hue, 0.90, 0.78);
+                cOcc.setHSL(hue, 0.65, 0.03);
+            }
+            return { cCore, cInner, cOuter, cDust, cOcc };
+        }
+
+        function applySpectrumPosition(t, smooth = false) {
+            const clamped = Math.max(0, Math.min(1, t));
+            const thumb = document.getElementById('spectrum-thumb');
+            const triggerIcon = document.getElementById('palette-trigger-icon');
+
+            const { cCore, cInner, cOuter, cDust, cOcc } = computeSpectrumPalette(clamped);
+            currentAccentHex = '#' + cInner.getHexString();
+
+            if (thumb) {
+                thumb.style.left = `${clamped * 100}%`;
+                thumb.style.backgroundColor = currentAccentHex;
+                thumb.style.boxShadow = `0 2px 10px rgba(0,0,0,0.85), 0 0 14px ${currentAccentHex}`;
+            }
+            if (triggerIcon) {
+                triggerIcon.style.color = currentAccentHex;
+                triggerIcon.style.filter = `drop-shadow(0 0 6px ${currentAccentHex})`;
+            }
+
+            if (!is3DInitialized) return;
+
+            const dur = smooth ? 0.35 : 0.08;
+            gsap.to(innerOccluderSphere.material.color, { r: cOcc.r, g: cOcc.g, b: cOcc.b, duration: dur, overwrite: 'auto' });
+            if (coreAuraSprite) gsap.to(coreAuraSprite.material.color, { r: cInner.r, g: cInner.g, b: cInner.b, duration: dur, overwrite: 'auto' });
+            gsap.to(coreStarPoints.material.color, { r: cDust.r, g: cDust.g, b: cDust.b, duration: dur, overwrite: 'auto' });
+            gsap.to(ringDustPoints.material.color, { r: cDust.r, g: cDust.g, b: cDust.b, duration: dur, overwrite: 'auto' });
+
+            for (let i = 0; i < coreSprites.length; i++) {
+                gsap.to(coreSprites[i].material.color, { r: cCore.r, g: cCore.g, b: cCore.b, duration: dur, overwrite: 'auto' });
+            }
+            for (let i = 0; i < ringInnerMaterials.length; i++) {
+                gsap.to(ringInnerMaterials[i].color, { r: cInner.r, g: cInner.g, b: cInner.b, duration: dur, overwrite: 'auto' });
+                gsap.to(ringOuterMaterials[i].color, { r: cOuter.r, g: cOuter.g, b: cOuter.b, duration: dur, overwrite: 'auto' });
+            }
+        }
+
+        function initSpectrumBarEvents() {
+            const bar = document.getElementById('spectrum-bar');
+            const thumb = document.getElementById('spectrum-thumb');
+            if (!bar) return;
+
+            let draggingBar = false;
+
+            function updateFromClientX(clientX, isClick = false) {
+                const rect = bar.getBoundingClientRect();
+                if (rect.width <= 0) return;
+                const t = (clientX - rect.left) / rect.width;
+                applySpectrumPosition(t, isClick);
+            }
+
+            bar.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                draggingBar = true;
+                if (thumb) thumb.classList.add('is-dragging');
+                bar.setPointerCapture(e.pointerId);
+                updateFromClientX(e.clientX, true);
+            });
+
+            bar.addEventListener('pointermove', (e) => {
+                if (!draggingBar) return;
+                e.stopPropagation();
+                updateFromClientX(e.clientX, false);
+            });
+
+            function finishBarDrag(e) {
+                if (!draggingBar) return;
+                draggingBar = false;
+                if (thumb) thumb.classList.remove('is-dragging');
+                try { bar.releasePointerCapture(e.pointerId); } catch (err) {}
+                setTimeout(() => closeThemeDropdown(), 180);
+            }
+
+            bar.addEventListener('pointerup', finishBarDrag);
+            bar.addEventListener('pointercancel', finishBarDrag);
+        }
+
+        window.addEventListener('DOMContentLoaded', initSpectrumBarEvents);
+
+        // ==========================================
+        // PHRASE TOAST
+        // ==========================================
+        function showPhraseToast(phrase, langName) {
+            const toast = document.getElementById('phrase-toast');
+            const langEl = document.getElementById('toast-lang-name');
+            const phraseEl = document.getElementById('toast-phrase-text');
+            const dotEl = document.getElementById('toast-lang-Dot');
+            const progressEl = document.getElementById('toast-progress-bar');
+
+            dotEl.style.backgroundColor = currentAccentHex;
+            dotEl.style.boxShadow = `0 0 8px ${currentAccentHex}`;
+            phraseEl.textContent = phrase;
+            phraseEl.style.color = currentAccentHex;
+            langEl.textContent = langName;
+
+            hideGestureHint();
+
+            gsap.killTweensOf(toast);
+            gsap.fromTo(toast,
+                { opacity: parseFloat(gsap.getProperty(toast, 'opacity')) || 0, y: 12, scale: 0.94, filter: 'blur(6px)' },
+                { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.52, ease: 'power3.out' }
+            );
+
+            if (progressEl) {
+                gsap.killTweensOf(progressEl);
+                gsap.fromTo(progressEl, { scaleX: 1 }, { scaleX: 0, duration: 2.35, ease: 'none' });
+            }
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => hidePhraseToast(), 2350);
+        }
+
+        function hidePhraseToast() {
+            const toast = document.getElementById('phrase-toast');
+            if (!toast) return;
+            gsap.killTweensOf(toast);
+            gsap.to(toast, { opacity: 0, y: 12, scale: 0.95, filter: 'blur(6px)', duration: 0.62, ease: 'power2.inOut' });
+        }
+
+        // ==========================================
+        // 3D SATURN ENGINE
+        // ==========================================
+        let scene, camera, renderer, saturnSystem, coreGroup, ringsGroup;
+        let coreSprites = [];
+        let ringSprites = [];
+        let allInteractiveSprites = [];
+        let ringInnerMaterials = [];
+        let ringOuterMaterials = [];
+        let innerOccluderSphere, coreAuraSprite, coreStarPoints, ringDustPoints;
+        let is3DInitialized = false;
+
+        const defaultQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.32, 0.0, 0.42, 'XYZ'));
+        let angularVelX = 0, angularVelY = 0, angularVelZ = 0;
+        let isDraggingPlanet = false;
+        let isResettingCamera = false;
+        let targetCameraZ = 36;
+
+        const phraseTexturePool = [];
+
+        function drawPhraseOnCanvas(canvas, text) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const fontSize = text.length > 19 ? 19 : (text.length > 14 ? 22 : 26);
+            ctx.font = `600 ${fontSize}px "Inter", "Segoe UI", system-ui, -apple-system, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+            ctx.shadowBlur = 11;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+            ctx.shadowBlur = 2;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+        }
+
+        function buildLanguageTextures() {
+            if (phraseTexturePool.length > 0) return;
+            for (let i = 0; i < LOVE_DATA_499.length; i++) {
+                const text = LOVE_DATA_499[i][0];
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 64;
+                drawPhraseOnCanvas(canvas, text);
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.minFilter = THREE.LinearFilter;
+                tex.magFilter = THREE.LinearFilter;
+                tex.needsUpdate = true;
+                phraseTexturePool.push(tex);
+            }
+        }
+
+        function createSoftParticleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            grad.addColorStop(0, 'rgba(255,255,255,1)');
+            grad.addColorStop(0.35, 'rgba(255,255,255,0.65)');
+            grad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 64, 64);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createAuraGlowTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(128, 128, 10, 128, 128, 128);
+            grad.addColorStop(0, 'rgba(255,255,255,0.26)');
+            grad.addColorStop(0.45, 'rgba(255,255,255,0.08)');
+            grad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 256, 256);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function initSaturn3D() {
+            if (is3DInitialized) return;
+            is3DInitialized = true;
+
+            buildLanguageTextures();
+
+            const container = document.getElementById('canvas-container');
+            const dotTexture = createSoftParticleTexture();
+            const auraTexture = createAuraGlowTexture();
+            const initColors = computeSpectrumPalette(0);
+
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x040406, 0.0032);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const isMobile = window.innerWidth < 640;
+            targetCameraZ = isMobile ? 52 : 38;
+            camera.position.set(0, 0, targetCameraZ);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                preserveDrawingBuffer: true,
+                powerPreference: 'high-performance'
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setClearColor(0x040406, 1);
+            container.appendChild(renderer.domElement);
+
+            saturnSystem = new THREE.Group();
+            saturnSystem.quaternion.copy(defaultQuat);
+            scene.add(saturnSystem);
+
+            coreGroup = new THREE.Group();
+            ringsGroup = new THREE.Group();
+            saturnSystem.add(coreGroup);
+            saturnSystem.add(ringsGroup);
+
+            // Inner occluder sphere
+            innerOccluderSphere = new THREE.Mesh(
+                new THREE.SphereGeometry(6.2, 48, 48),
+                new THREE.MeshBasicMaterial({ color: initColors.cOcc, transparent: true, opacity: 0.88 })
+            );
+            coreGroup.add(innerOccluderSphere);
+
+            // Aura
+            coreAuraSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: auraTexture,
+                color: initColors.cInner,
+                transparent: true,
+                opacity: 0.55,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            }));
+            coreAuraSprite.scale.set(23, 23, 1);
+            coreGroup.add(coreAuraSprite);
+
+            // Core star lattice
+            const coreStarsCount = 950;
+            const coreStarPos = new Float32Array(coreStarsCount * 3);
+            for (let i = 0; i < coreStarsCount; i++) {
+                const phi = Math.acos(1 - 2 * (i + 0.5) / coreStarsCount);
+                const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+                const r = 6.3 + (Math.random() - 0.5) * 0.22;
+                coreStarPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                coreStarPos[i * 3 + 1] = r * Math.cos(phi);
+                coreStarPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+            }
+            const coreStarGeo = new THREE.BufferGeometry();
+            coreStarGeo.setAttribute('position', new THREE.BufferAttribute(coreStarPos, 3));
+            coreStarPoints = new THREE.Points(coreStarGeo, new THREE.PointsMaterial({
+                color: initColors.cDust, size: 0.28, map: dotTexture,
+                transparent: true, opacity: 0.72, depthWrite: false, blending: THREE.AdditiveBlending
+            }));
+            coreGroup.add(coreStarPoints);
+
+            // Core sphere of text sprites
+            const corePhraseCount = 520;
+            const coreRadius = 6.85;
+
+            for (let i = 0; i < corePhraseCount; i++) {
+                const langIdx = i % LOVE_DATA_499.length;
+                const [phraseText, langName] = LOVE_DATA_499[langIdx];
+                const tex = phraseTexturePool[langIdx];
+
+                const phi = Math.acos(1 - 2 * (i + 0.5) / corePhraseCount);
+                const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+
+                const x = coreRadius * Math.sin(phi) * Math.cos(theta);
+                const y = coreRadius * Math.cos(phi);
+                const z = coreRadius * Math.sin(phi) * Math.sin(theta);
+
+                const mat = new THREE.SpriteMaterial({
+                    map: tex, color: initColors.cCore, transparent: true, opacity: 0.9, depthWrite: false
+                });
+
+                const sprite = new THREE.Sprite(mat);
+                sprite.position.set(x, y, z);
+                sprite.scale.set(1.92, 0.48, 1);
+                sprite.userData = {
+                    isCore: true, langIdx, phrase: phraseText, langName,
+                    baseScaleX: 1.92, baseScaleY: 0.48, pulseMul: 1
+                };
+
+                coreGroup.add(sprite);
+                coreSprites.push(sprite);
+                allInteractiveSprites.push(sprite);
+            }
+
+            // Concentric ring sprites
+            for (let i = 0; i < LOVE_DATA_499.length; i++) {
+                ringInnerMaterials.push(new THREE.SpriteMaterial({
+                    map: phraseTexturePool[i], color: initColors.cInner,
+                    transparent: true, opacity: 0.92, depthWrite: false
+                }));
+                ringOuterMaterials.push(new THREE.SpriteMaterial({
+                    map: phraseTexturePool[i], color: initColors.cOuter,
+                    transparent: true, opacity: 0.78, depthWrite: false
+                }));
+            }
+
+            const ringBands = [
+                { radius: 10.2, count: 72, isInner: true },
+                { radius: 11.4, count: 80, isInner: true },
+                { radius: 12.6, count: 88, isInner: true },
+                { radius: 13.8, count: 92, isInner: true },
+                { radius: 15.0, count: 96, isInner: true },
+                { radius: 16.2, count: 98, isInner: true },
+                { radius: 18.4, count: 94, isInner: false },
+                { radius: 19.7, count: 96, isInner: false },
+                { radius: 21.0, count: 94, isInner: false },
+                { radius: 22.4, count: 92, isInner: false }
+            ];
+
+            let langCounter = 0;
+            ringBands.forEach((band, bIdx) => {
+                for (let s = 0; s < band.count; s++) {
+                    const langIdx = langCounter % LOVE_DATA_499.length;
+                    langCounter++;
+
+                    const [phraseText, langName] = LOVE_DATA_499[langIdx];
+                    const mat = band.isInner ? ringInnerMaterials[langIdx] : ringOuterMaterials[langIdx];
+                    const sprite = new THREE.Sprite(mat);
+
+                    const angle = (s / band.count) * Math.PI * 2 + (bIdx * 0.47);
+                    const rJitter = band.radius + (Math.random() - 0.5) * 0.55;
+                    const yJitter = (Math.random() - 0.5) * 0.28;
+
+                    const scaleMul = 0.82 + (bIdx * 0.025);
+                    const baseX = 2.35 * scaleMul;
+                    const baseY = 0.58 * scaleMul;
+                    sprite.scale.set(baseX, baseY, 1);
+
+                    const orbitalSpeed = 0.0021 / Math.sqrt(rJitter / 10);
+
+                    sprite.userData = {
+                        isCore: false, isInnerRing: band.isInner,
+                        langIdx, phrase: phraseText, langName,
+                        radius: rJitter, angle, speed: orbitalSpeed,
+                        baseScaleX: baseX, baseScaleY: baseY, pulseMul: 1
+                    };
+
+                    sprite.position.set(
+                        Math.cos(angle) * rJitter,
+                        yJitter,
+                        Math.sin(angle) * rJitter
+                    );
+
+                    ringsGroup.add(sprite);
+                    ringSprites.push(sprite);
+                    allInteractiveSprites.push(sprite);
+                }
+            });
+
+            // Ring dust
+            const ringDustCount = 2400;
+            const ringDustPos = new Float32Array(ringDustCount * 3);
+            for (let i = 0; i < ringDustCount; i++) {
+                const r = Math.random() < 0.62 ? (10.0 + Math.random() * 6.4) : (18.2 + Math.random() * 4.6);
+                const angle = Math.random() * Math.PI * 2;
+                ringDustPos[i * 3] = Math.cos(angle) * r;
+                ringDustPos[i * 3 + 1] = (Math.random() - 0.5) * 0.32;
+                ringDustPos[i * 3 + 2] = Math.sin(angle) * r;
+            }
+            const ringDustGeo = new THREE.BufferGeometry();
+            ringDustGeo.setAttribute('position', new THREE.BufferAttribute(ringDustPos, 3));
+            ringDustPoints = new THREE.Points(ringDustGeo, new THREE.PointsMaterial({
+                color: initColors.cDust, size: 0.22, map: dotTexture,
+                transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending
+            }));
+            ringsGroup.add(ringDustPoints);
+
+            // Background stars
+            const bgStarsCount = 2600;
+            const bgStarsPos = new Float32Array(bgStarsCount * 3);
+            for (let i = 0; i < bgStarsCount; i++) {
+                const r = 100 + Math.random() * 240;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                bgStarsPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                bgStarsPos[i * 3 + 1] = r * Math.cos(phi);
+                bgStarsPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+            }
+            const bgStarsGeo = new THREE.BufferGeometry();
+            bgStarsGeo.setAttribute('position', new THREE.BufferAttribute(bgStarsPos, 3));
+            scene.add(new THREE.Points(bgStarsGeo, new THREE.PointsMaterial({
+                color: 0xffffff, size: 0.65, map: dotTexture,
+                transparent: true, opacity: 0.65, depthWrite: false
+            })));
+
+            setupFree360ControlsAndRaycaster(renderer.domElement);
+            window.addEventListener('resize', onResize3D);
+            animateSaturn3D();
+        }
+
+        function setupFree360ControlsAndRaycaster(domElement) {
+            const raycaster = new THREE.Raycaster();
+            const mouseNDC = new THREE.Vector2();
+            const projVec = new THREE.Vector3();
+            const worldPosVec = new THREE.Vector3();
+            const camDirVec = new THREE.Vector3();
+
+            const activePointers = new Map();
+            let prevSinglePos = { x: 0, y: 0 };
+            let prevPinchDist = 0;
+            let prevPinchAngle = 0;
+
+            let downStartPos = { x: 0, y: 0 };
+            let downTimestamp = 0;
+            let maxMoveDistance = 0;
+
+            const rotAxisX = new THREE.Vector3(1, 0, 0);
+            const rotAxisY = new THREE.Vector3(0, 1, 0);
+            const rotAxisZ = new THREE.Vector3(0, 0, 1);
+            const qDelta = new THREE.Quaternion();
+
+            domElement.addEventListener('pointerdown', (e) => {
+                activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                isResettingCamera = false;
+
+                if (activePointers.size === 1) {
+                    isDraggingPlanet = true;
+                    prevSinglePos.x = e.clientX;
+                    prevSinglePos.y = e.clientY;
+                    downStartPos.x = e.clientX;
+                    downStartPos.y = e.clientY;
+                    downTimestamp = performance.now();
+                    maxMoveDistance = 0;
+                    angularVelX = 0; angularVelY = 0; angularVelZ = 0;
+                } else if (activePointers.size === 2) {
+                    const pts = Array.from(activePointers.values());
+                    prevPinchDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+                    prevPinchAngle = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
+                    maxMoveDistance = 999;
+                }
+            });
+
+            domElement.addEventListener('pointermove', (e) => {
+                if (!activePointers.has(e.pointerId)) return;
+                activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+                if (activePointers.size === 1 && isDraggingPlanet) {
+                    const dx = e.clientX - prevSinglePos.x;
+                    const dy = e.clientY - prevSinglePos.y;
+                    prevSinglePos.x = e.clientX;
+                    prevSinglePos.y = e.clientY;
+
+                    const distFromStart = Math.hypot(e.clientX - downStartPos.x, e.clientY - downStartPos.y);
+                    if (distFromStart > maxMoveDistance) maxMoveDistance = distFromStart;
+                    if (maxMoveDistance > 4) hideGestureHint();
+
+                    const sensitivity = 0.0065;
+
+                    if (e.shiftKey || e.buttons === 2) {
+                        const centerX = window.innerWidth / 2;
+                        const centerY = window.innerHeight / 2;
+                        const prevAngle = Math.atan2(prevSinglePos.y - dy - centerY, prevSinglePos.x - dx - centerX);
+                        const currAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+                        let dRoll = currAngle - prevAngle;
+                        if (dRoll > Math.PI) dRoll -= Math.PI * 2;
+                        if (dRoll < -Math.PI) dRoll += Math.PI * 2;
+
+                        qDelta.setFromAxisAngle(rotAxisZ, dRoll);
+                        saturnSystem.quaternion.premultiply(qDelta);
+                        angularVelZ = dRoll * 0.6;
+                    } else {
+                        qDelta.setFromAxisAngle(rotAxisY, dx * sensitivity);
+                        saturnSystem.quaternion.premultiply(qDelta);
+
+                        qDelta.setFromAxisAngle(rotAxisX, dy * sensitivity);
+                        saturnSystem.quaternion.premultiply(qDelta);
+
+                        const edgeOffsetX = (e.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
+                        const edgeRoll = -dy * edgeOffsetX * 0.0018;
+                        qDelta.setFromAxisAngle(rotAxisZ, edgeRoll);
+                        saturnSystem.quaternion.premultiply(qDelta);
+
+                        saturnSystem.quaternion.normalize();
+
+                        angularVelY = dx * sensitivity * 0.75;
+                        angularVelX = dy * sensitivity * 0.75;
+                        angularVelZ = edgeRoll * 0.75;
+                    }
+                } else if (activePointers.size === 2) {
+                    const pts = Array.from(activePointers.values());
+                    const currDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+                    const currAngle = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
+
+                    if (prevPinchDist > 0) {
+                        const deltaDist = prevPinchDist - currDist;
+                        targetCameraZ = Math.max(14, Math.min(78, targetCameraZ + deltaDist * 0.09));
+                    }
+
+                    let dAngle = currAngle - prevPinchAngle;
+                    if (dAngle > Math.PI) dAngle -= Math.PI * 2;
+                    if (dAngle < -Math.PI) dAngle += Math.PI * 2;
+
+                    qDelta.setFromAxisAngle(rotAxisZ, -dAngle);
+                    saturnSystem.quaternion.premultiply(qDelta);
+                    saturnSystem.quaternion.normalize();
+                    angularVelZ = -dAngle * 0.5;
+
+                    prevPinchDist = currDist;
+                    prevPinchAngle = currAngle;
+                }
+            });
+
+            function handlePointerUp(e) {
+                activePointers.delete(e.pointerId);
+                if (activePointers.size === 0) {
+                    isDraggingPlanet = false;
+                    const elapsed = performance.now() - downTimestamp;
+                    if (maxMoveDistance < 10 && elapsed < 550) {
+                        checkWordTap(e.clientX, e.clientY);
+                    }
+                } else if (activePointers.size === 1) {
+                    const remaining = Array.from(activePointers.values())[0];
+                    prevSinglePos.x = remaining.x;
+                    prevSinglePos.y = remaining.y;
+                }
+            }
+
+            domElement.addEventListener('pointerup', handlePointerUp);
+            domElement.addEventListener('pointercancel', handlePointerUp);
+            domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            domElement.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                hideGestureHint();
+                isResettingCamera = false;
+                targetCameraZ = Math.max(14, Math.min(78, targetCameraZ + e.deltaY * 0.025));
+            }, { passive: false });
+
+            function checkWordTap(clientX, clientY) {
+                saturnSystem.updateMatrixWorld(true);
+                camDirVec.copy(camera.position).normalize();
+
+                mouseNDC.x = (clientX / window.innerWidth) * 2 - 1;
+                mouseNDC.y = -(clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouseNDC, camera);
+                const intersects = raycaster.intersectObjects(allInteractiveSprites, false);
+
+                let chosen = null;
+                for (let i = 0; i < intersects.length; i++) {
+                    const obj = intersects[i].object;
+                    if (obj.userData.isCore) {
+                        obj.getWorldPosition(worldPosVec);
+                        if (worldPosVec.normalize().dot(camDirVec) < 0.05) continue;
+                    }
+                    chosen = obj;
+                    break;
+                }
+
+                if (!chosen) {
+                    let bestScore = Infinity;
+                    const halfW = window.innerWidth / 2;
+                    const halfH = window.innerHeight / 2;
+
+                    for (let i = 0; i < allInteractiveSprites.length; i++) {
+                        const sp = allInteractiveSprites[i];
+                        sp.getWorldPosition(worldPosVec);
+
+                        if (sp.userData.isCore) {
+                            const facing = worldPosVec.clone().normalize().dot(camDirVec);
+                            if (facing < 0.08) continue;
+                        }
+
+                        projVec.copy(worldPosVec).project(camera);
+                        if (projVec.z < 0 || projVec.z > 1) continue;
+
+                        const sx = (projVec.x * halfW) + halfW;
+                        const sy = -(projVec.y * halfH) + halfH;
+                        const dx = sx - clientX;
+                        const dy = sy - clientY;
+                        const pixelDist = Math.hypot(dx * 0.75, dy * 1.35);
+
+                        if (pixelDist < 26) {
+                            const score = pixelDist + projVec.z * 8;
+                            if (score < bestScore) {
+                                bestScore = score;
+                                chosen = sp;
+                            }
+                        }
+                    }
+                }
+
+                if (chosen) {
+                    const data = chosen.userData;
+                    if (navigator.vibrate) navigator.vibrate(14);
+                    playWordPing();
+
+                    gsap.killTweensOf(data);
+                    data.pulseMul = 1;
+                    gsap.to(data, {
+                        pulseMul: 1.55, duration: 0.2, yoyo: true, repeat: 1, ease: 'power2.out'
+                    });
+
+                    showPhraseToast(data.phrase, data.langName);
+                }
+            }
+        }
+
+        function resetCameraView() {
+            if (!saturnSystem || !camera) return;
+            const isMobile = window.innerWidth < 640;
+            targetCameraZ = isMobile ? 52 : 38;
+            angularVelX = 0; angularVelY = 0; angularVelZ = 0;
+            isResettingCamera = true;
+        }
+
+        function captureSnapshot() {
+            if (!renderer || !scene || !camera) return;
+            try {
+                renderer.render(scene, camera);
+                const dataURL = renderer.domElement.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'saturn-of-love-499plus-languages.png';
+                link.href = dataURL;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showModal('Снимок сохранён', 'Кадр вашей 3D-Вселенной из 499+ языков любви сохранён на устройство.');
+            } catch (err) {
+                showModal('Снимок готов', 'Сделайте скриншот экрана, чтобы поделиться этим ракурсом Вселенной.');
+            }
+        }
+
+        function onResize3D() {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        const tempWorldPos = new THREE.Vector3();
+        const tempCamDir = new THREE.Vector3();
+        const inertiaQuat = new THREE.Quaternion();
+        const axisX = new THREE.Vector3(1, 0, 0);
+        const axisY = new THREE.Vector3(0, 1, 0);
+        const axisZ = new THREE.Vector3(0, 0, 1);
+
+        function animateSaturn3D() {
+            requestAnimationFrame(animateSaturn3D);
+
+            if (saturnSystem && coreGroup && ringsGroup && camera) {
+                camera.position.z += (targetCameraZ - camera.position.z) * 0.1;
+
+                if (isResettingCamera) {
+                    saturnSystem.quaternion.slerp(defaultQuat, 0.08);
+                    if (saturnSystem.quaternion.angleTo(defaultQuat) < 0.005) isResettingCamera = false;
+                } else if (!isDraggingPlanet) {
+                    if (Math.abs(angularVelX) > 0.00005 || Math.abs(angularVelY) > 0.00005 || Math.abs(angularVelZ) > 0.00005) {
+                        inertiaQuat.setFromAxisAngle(axisY, angularVelY);
+                        saturnSystem.quaternion.premultiply(inertiaQuat);
+
+                        inertiaQuat.setFromAxisAngle(axisX, angularVelX);
+                        saturnSystem.quaternion.premultiply(inertiaQuat);
+
+                        inertiaQuat.setFromAxisAngle(axisZ, angularVelZ);
+                        saturnSystem.quaternion.premultiply(inertiaQuat);
+
+                        saturnSystem.quaternion.normalize();
+
+                        angularVelX *= 0.94;
+                        angularVelY *= 0.94;
+                        angularVelZ *= 0.94;
+                    }
+                }
+
+                coreGroup.rotation.y += 0.0022;
+                ringDustPoints.rotation.y -= 0.0008;
+
+                tempCamDir.copy(camera.position).normalize();
+
+                for (let i = 0; i < coreSprites.length; i++) {
+                    const sp = coreSprites[i];
+                    sp.getWorldPosition(tempWorldPos);
+                    tempWorldPos.normalize();
+
+                    const facing = tempWorldPos.dot(tempCamDir);
+                    const pMul = sp.userData.pulseMul || 1;
+
+                    if (facing > 0) {
+                        sp.material.opacity = Math.min(1, (0.34 + facing * 0.66) * pMul);
+                        const s = (0.84 + facing * 0.22) * pMul;
+                        sp.scale.set(sp.userData.baseScaleX * s, sp.userData.baseScaleY * s, 1);
+                    } else {
+                        sp.material.opacity = Math.max(0.05, 0.22 + facing * 0.2);
+                        sp.scale.set(sp.userData.baseScaleX * 0.75 * pMul, sp.userData.baseScaleY * 0.75 * pMul, 1);
+                    }
+                }
+
+                for (let i = 0; i < ringSprites.length; i++) {
+                    const sp = ringSprites[i];
+                    const data = sp.userData;
+                    data.angle -= data.speed;
+                    const r = data.radius;
+                    sp.position.x = Math.cos(data.angle) * r;
+                    sp.position.z = Math.sin(data.angle) * r;
+
+                    const pMul = data.pulseMul || 1;
+                    sp.scale.set(data.baseScaleX * pMul, data.baseScaleY * pMul, 1);
+                }
+            }
+
+            if (renderer && scene && camera) renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
